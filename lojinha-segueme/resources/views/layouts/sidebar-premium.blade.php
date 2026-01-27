@@ -18,10 +18,16 @@
                 <img src="{{ asset('images/logo.png') }}" 
                      alt="Logo Segue-me" 
                      class="w-full h-full object-contain"
+                     width="40"
+                     height="40"
+                     loading="lazy"
                      x-show="!collapsed">
                 <img src="{{ asset('images/logo-icon.png') }}" 
                      alt="Logo Segue-me" 
                      class="w-full h-full object-contain"
+                     width="40"
+                     height="40"
+                     loading="lazy"
                      x-show="collapsed"
                      x-cloak>
             </div>

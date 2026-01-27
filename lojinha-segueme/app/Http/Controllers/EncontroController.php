@@ -16,6 +16,14 @@ use Illuminate\Support\Facades\Log;
 class EncontroController extends Controller
 {
     /**
+     * Limpa cache do dashboard após alterações
+     */
+    private function limparCacheDashboard(): void
+    {
+        DashboardController::limparCache();
+    }
+
+    /**
      * Lista todos os encontros
      */
     public function index()
@@ -119,45 +127,76 @@ class EncontroController extends Controller
                 'status' => 'aberto'
             ]);
 
-            $totalItens = 0;
+            // ===========================================
+            // OTIMIZAÇÃO: Carregar todos os estoques de uma vez
+            // ===========================================
+            $produtoIds = collect($itens)->pluck('produto_id')->unique()->toArray();
+            $estoques = Estoque::whereIn('produto_id', $produtoIds)
+                ->get()
+                ->keyBy('produto_id');
 
-            // Criar saídas provisórias e atualizar estoque
+            // Preparar arrays para bulk insert
+            $saidasProvisorias = [];
+            $movimentacoes = [];
+            $estoquesParaAtualizar = [];
+            $totalItens = 0;
+            $agora = now();
+
+            // Validar e preparar dados
             foreach ($itens as $item) {
                 $produtoId = $item['produto_id'];
                 $quantidade = (int) $item['quantidade'];
 
                 // Verificar estoque
-                $estoque = Estoque::where('produto_id', $produtoId)->first();
+                $estoque = $estoques->get($produtoId);
                 if (!$estoque || $estoque->quantidade < $quantidade) {
                     throw new \Exception("Estoque insuficiente para o produto ID {$produtoId}");
                 }
 
-                // Criar saída provisória
-                SaidaProvisoria::create([
+                // Preparar saída provisória para bulk insert
+                $saidasProvisorias[] = [
                     'encontro_id' => $encontro->id,
                     'produto_id' => $produtoId,
                     'quantidade' => $quantidade,
-                    'data_saida' => now()
-                ]);
+                    'data_saida' => $agora,
+                    'created_at' => $agora,
+                    'updated_at' => $agora,
+                ];
 
-                // Atualizar estoque (diminui)
-                $estoque->quantidade -= $quantidade;
-                $estoque->save();
-
-                // Registrar movimentação no histórico
-                MovimentacaoEstoque::create([
+                // Preparar movimentação para bulk insert
+                $movimentacoes[] = [
                     'produto_id' => $produtoId,
                     'tipo' => 'saida',
                     'quantidade' => $quantidade,
                     'motivo' => 'Saída Temporária para Encontro',
                     'observacoes' => "Encontro: {$encontro->nome} (ID: {$encontro->id})",
-                    'data_movimentacao' => now()
-                ]);
+                    'data_movimentacao' => $agora,
+                    'created_at' => $agora,
+                    'updated_at' => $agora,
+                ];
+
+                // Atualizar quantidade no objeto (será salvo depois)
+                $estoque->quantidade -= $quantidade;
+                $estoquesParaAtualizar[$produtoId] = $estoque;
 
                 $totalItens += $quantidade;
             }
 
+            // Bulk insert saídas provisórias
+            SaidaProvisoria::insert($saidasProvisorias);
+
+            // Bulk insert movimentações
+            MovimentacaoEstoque::insert($movimentacoes);
+
+            // Atualizar estoques (ainda precisa ser individual devido a valores diferentes)
+            foreach ($estoquesParaAtualizar as $estoque) {
+                $estoque->save();
+            }
+
             DB::commit();
+
+            // Limpa cache do dashboard
+            $this->limparCacheDashboard();
 
             // Se for requisição AJAX, retorna JSON
             if ($request->ajax() || $request->wantsJson()) {
@@ -259,8 +298,21 @@ class EncontroController extends Controller
         try {
             DB::beginTransaction();
 
+            // ===========================================
+            // OTIMIZAÇÃO: Carregar todos os estoques de uma vez
+            // ===========================================
+            $produtoIds = collect($baixas)->pluck('produto_id')->unique()->toArray();
+            $estoques = Estoque::whereIn('produto_id', $produtoIds)
+                ->get()
+                ->keyBy('produto_id');
+
+            // Preparar arrays para bulk insert
+            $baixasParaInserir = [];
+            $movimentacoes = [];
+            $estoquesParaAtualizar = [];
             $totalVendido = 0;
             $totalDevolvido = 0;
+            $agora = now();
 
             foreach ($baixas as $baixa) {
                 $produtoId = $baixa['produto_id'];
@@ -268,32 +320,36 @@ class EncontroController extends Controller
                 $quantidadeDevolvida = (int) ($baixa['quantidade_devolvida'] ?? 0);
                 $valorTotal = (float) ($baixa['valor_total'] ?? 0);
 
-                // Registrar baixa
-                BaixaEstoque::create([
+                // Preparar baixa para bulk insert
+                $baixasParaInserir[] = [
                     'encontro_id' => $encontro->id,
                     'produto_id' => $produtoId,
                     'quantidade_vendida' => $quantidadeVendida,
                     'quantidade_devolvida' => $quantidadeDevolvida,
                     'valor_total' => $valorTotal,
-                    'data_baixa' => now()
-                ]);
+                    'data_baixa' => $agora,
+                    'created_at' => $agora,
+                    'updated_at' => $agora,
+                ];
 
                 // Devolver ao estoque o que não foi vendido
                 if ($quantidadeDevolvida > 0) {
-                    $estoque = Estoque::where('produto_id', $produtoId)->first();
+                    $estoque = $estoques->get($produtoId);
                     if ($estoque) {
                         $estoque->quantidade += $quantidadeDevolvida;
-                        $estoque->save();
+                        $estoquesParaAtualizar[$produtoId] = $estoque;
 
-                        // Registrar movimentação de devolução no histórico
-                        MovimentacaoEstoque::create([
+                        // Preparar movimentação para bulk insert
+                        $movimentacoes[] = [
                             'produto_id' => $produtoId,
                             'tipo' => 'entrada',
                             'quantidade' => $quantidadeDevolvida,
                             'motivo' => 'Devolução de Encontro',
                             'observacoes' => "Encontro: {$encontro->nome} (ID: {$encontro->id})",
-                            'data_movimentacao' => now()
-                        ]);
+                            'data_movimentacao' => $agora,
+                            'created_at' => $agora,
+                            'updated_at' => $agora,
+                        ];
                     }
                 }
 
@@ -301,10 +357,26 @@ class EncontroController extends Controller
                 $totalDevolvido += $quantidadeDevolvida;
             }
 
+            // Bulk insert baixas
+            BaixaEstoque::insert($baixasParaInserir);
+
+            // Bulk insert movimentações (se houver devoluções)
+            if (!empty($movimentacoes)) {
+                MovimentacaoEstoque::insert($movimentacoes);
+            }
+
+            // Atualizar estoques
+            foreach ($estoquesParaAtualizar as $estoque) {
+                $estoque->save();
+            }
+
             // Fechar encontro
             $encontro->update(['status' => 'fechado']);
 
             DB::commit();
+
+            // Limpa cache do dashboard
+            $this->limparCacheDashboard();
 
             return redirect()
                 ->route('encontros.show', $encontro)

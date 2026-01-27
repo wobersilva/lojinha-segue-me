@@ -4,7 +4,10 @@
         <div class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white dark:bg-gray-800">
             <img src="{{ asset('images/logo.png') }}" 
                  alt="Logo Segue-me" 
-                 class="w-full h-full object-contain">
+                 class="w-full h-full object-contain"
+                 width="40"
+                 height="40"
+                 loading="lazy">
         </div>
         <div class="font-semibold text-gray-900 dark:text-gray-100">Lojinha do Segue-me</div>
     </div>

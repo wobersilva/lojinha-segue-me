@@ -13,6 +13,14 @@ use Illuminate\Support\Facades\Log;
 class MovimentacaoController extends Controller
 {
     /**
+     * Limpa cache do dashboard após alterações
+     */
+    private function limparCacheDashboard(): void
+    {
+        DashboardController::limparCache();
+    }
+
+    /**
      * Exibe a tela de entradas
      */
     public function entradas()
@@ -48,6 +56,20 @@ class MovimentacaoController extends Controller
             DB::beginTransaction();
 
             $observacaoGeral = $request->observacao;
+            $agora = now();
+
+            // ===========================================
+            // OTIMIZAÇÃO: Carregar todos os produtos e estoques de uma vez
+            // ===========================================
+            $produtoIds = collect($itens)->pluck('produto_id')->unique()->toArray();
+            $produtos = Produto::whereIn('id', $produtoIds)->get()->keyBy('id');
+            $estoques = Estoque::whereIn('produto_id', $produtoIds)->get()->keyBy('produto_id');
+
+            // Preparar arrays para bulk insert
+            $entradasEstoque = [];
+            $movimentacoes = [];
+            $estoquesParaAtualizar = [];
+            $produtosParaAtualizar = [];
             $totalItens = 0;
             $totalValor = 0;
 
@@ -62,50 +84,72 @@ class MovimentacaoController extends Controller
                 }
 
                 // Verificar se o produto existe
-                $produto = Produto::find($produtoId);
+                $produto = $produtos->get($produtoId);
                 if (!$produto) {
                     throw new \Exception("Produto ID {$produtoId} não encontrado");
                 }
 
-                // Registrar entrada no histórico
-                EntradaEstoque::create([
+                // Preparar entrada para bulk insert
+                $entradasEstoque[] = [
                     'produto_id' => $produtoId,
-                    'data_entrada' => now(),
+                    'data_entrada' => $agora,
                     'quantidade' => $quantidade,
                     'valor_custo' => $valorCusto,
-                    'observacoes' => $observacaoGeral
-                ]);
+                    'observacoes' => $observacaoGeral,
+                    'created_at' => $agora,
+                    'updated_at' => $agora,
+                ];
 
-                // Registrar na tabela de movimentações para histórico unificado
-                MovimentacaoEstoque::create([
+                // Preparar movimentação para bulk insert
+                $movimentacoes[] = [
                     'produto_id' => $produtoId,
                     'tipo' => 'entrada',
                     'quantidade' => $quantidade,
                     'motivo' => 'entrada_estoque',
                     'observacoes' => $observacaoGeral,
-                    'data_movimentacao' => now()
-                ]);
+                    'data_movimentacao' => $agora,
+                    'created_at' => $agora,
+                    'updated_at' => $agora,
+                ];
 
-                // Atualizar ou criar estoque
-                $estoque = Estoque::firstOrCreate(
-                    ['produto_id' => $produtoId],
-                    ['quantidade' => 0]
-                );
-
+                // Atualizar ou preparar criação de estoque
+                $estoque = $estoques->get($produtoId);
+                if (!$estoque) {
+                    $estoque = new Estoque(['produto_id' => $produtoId, 'quantidade' => 0]);
+                }
                 $estoque->quantidade += $quantidade;
-                $estoque->save();
+                $estoquesParaAtualizar[$produtoId] = $estoque;
 
                 // Atualizar preço de custo do produto se fornecido
                 if ($valorCusto > 0 && $produto->preco_custo != $valorCusto) {
                     $produto->preco_custo = $valorCusto;
-                    $produto->save();
+                    $produtosParaAtualizar[$produtoId] = $produto;
                 }
 
                 $totalItens += $quantidade;
                 $totalValor += ($quantidade * $valorCusto);
             }
 
+            // Bulk insert entradas
+            EntradaEstoque::insert($entradasEstoque);
+
+            // Bulk insert movimentações
+            MovimentacaoEstoque::insert($movimentacoes);
+
+            // Salvar estoques
+            foreach ($estoquesParaAtualizar as $estoque) {
+                $estoque->save();
+            }
+
+            // Salvar produtos com preço atualizado
+            foreach ($produtosParaAtualizar as $produto) {
+                $produto->save();
+            }
+
             DB::commit();
+
+            // Limpa cache do dashboard
+            $this->limparCacheDashboard();
 
             return redirect()
                 ->route('movimentacoes.entradas')
@@ -162,6 +206,18 @@ class MovimentacaoController extends Controller
 
             $motivo = $request->motivo;
             $observacao = $request->observacao;
+            $agora = now();
+
+            // ===========================================
+            // OTIMIZAÇÃO: Carregar todos os produtos e estoques de uma vez
+            // ===========================================
+            $produtoIds = collect($itens)->pluck('produto_id')->unique()->toArray();
+            $produtos = Produto::whereIn('id', $produtoIds)->get()->keyBy('id');
+            $estoques = Estoque::whereIn('produto_id', $produtoIds)->get()->keyBy('produto_id');
+
+            // Preparar arrays para bulk insert
+            $movimentacoes = [];
+            $estoquesParaAtualizar = [];
             $totalItens = 0;
 
             foreach ($itens as $item) {
@@ -174,35 +230,48 @@ class MovimentacaoController extends Controller
                 }
 
                 // Verificar se o produto existe
-                $produto = Produto::find($produtoId);
+                $produto = $produtos->get($produtoId);
                 if (!$produto) {
                     throw new \Exception("Produto ID {$produtoId} não encontrado");
                 }
 
                 // Verificar estoque
-                $estoque = Estoque::where('produto_id', $produtoId)->first();
+                $estoque = $estoques->get($produtoId);
                 if (!$estoque || $estoque->quantidade < $quantidade) {
                     throw new \Exception("Estoque insuficiente para o produto: {$produto->descricao} - {$produto->tamanho}");
                 }
 
-                // Criar registro de saída na tabela movimentacoes_estoque
-                MovimentacaoEstoque::create([
+                // Preparar movimentação para bulk insert
+                $movimentacoes[] = [
                     'produto_id' => $produtoId,
                     'tipo' => 'saida',
                     'quantidade' => $quantidade,
                     'motivo' => $motivo,
                     'observacoes' => $observacao,
-                    'data_movimentacao' => now()
-                ]);
+                    'data_movimentacao' => $agora,
+                    'created_at' => $agora,
+                    'updated_at' => $agora,
+                ];
 
                 // Atualizar estoque
                 $estoque->quantidade -= $quantidade;
-                $estoque->save();
+                $estoquesParaAtualizar[$produtoId] = $estoque;
 
                 $totalItens += $quantidade;
             }
 
+            // Bulk insert movimentações
+            MovimentacaoEstoque::insert($movimentacoes);
+
+            // Salvar estoques
+            foreach ($estoquesParaAtualizar as $estoque) {
+                $estoque->save();
+            }
+
             DB::commit();
+
+            // Limpa cache do dashboard
+            $this->limparCacheDashboard();
 
             return redirect()
                 ->route('movimentacoes.saidas')

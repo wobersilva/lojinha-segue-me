@@ -8,6 +8,14 @@ use Illuminate\Routing\Controller as BaseController;
 
 class ProdutoController extends BaseController
 {
+    /**
+     * Limpa cache do dashboard após alterações
+     */
+    private function limparCacheDashboard(): void
+    {
+        DashboardController::limparCache();
+    }
+
     public function index(Request $request)
     {
         $busca = trim((string) $request->get('q', ''));
@@ -77,6 +85,9 @@ class ProdutoController extends BaseController
         // Garante estoque inicial
         $produto->estoque()->firstOrCreate([], ['quantidade' => 0]);
 
+        // Limpa cache do dashboard
+        $this->limparCacheDashboard();
+
         return redirect()
             ->route('produtos.index')
             ->with('success', 'Produto cadastrado com sucesso!');
@@ -119,6 +130,9 @@ class ProdutoController extends BaseController
 
         $produto->update($data);
 
+        // Limpa cache do dashboard
+        $this->limparCacheDashboard();
+
         return redirect()
             ->route('produtos.index')
             ->with('success', 'Produto atualizado com sucesso!');
@@ -127,6 +141,9 @@ class ProdutoController extends BaseController
     public function destroy(Produto $produto)
     {
         $produto->delete();
+
+        // Limpa cache do dashboard
+        $this->limparCacheDashboard();
 
         return redirect()
             ->route('produtos.index')
