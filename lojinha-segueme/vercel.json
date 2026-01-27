@@ -21,11 +21,5 @@
             "src": "/(.*)",
             "dest": "api/index.php"
         }
-    ],
-    "env": {
-        "APP_ENV": "production",
-        "APP_DEBUG": "false",
-        "APP_KEY": "@app_key",
-        "APP_URL": "https://your-domain.vercel.app"
-    }
+    ]
 }
