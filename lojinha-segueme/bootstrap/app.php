@@ -17,17 +17,32 @@ $app = Application::configure(basePath: dirname(__DIR__))
         //
     })->create();
 
-// Configure storage paths for Vercel (serverless/read-only filesystem)
+// Configure paths for Vercel (serverless/read-only filesystem)
 if (isset($_ENV['VERCEL']) || getenv('VERCEL') || getenv('APP_ENV') === 'production') {
+    // Create writable directories in /tmp
+    $tmpDirs = [
+        '/tmp/storage',
+        '/tmp/storage/framework/cache',
+        '/tmp/storage/framework/sessions', 
+        '/tmp/storage/framework/views',
+        '/tmp/storage/logs',
+        '/tmp/bootstrap/cache',
+    ];
+    foreach ($tmpDirs as $dir) {
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+    }
+    
+    // Use /tmp for writable directories
     $app->useStoragePath('/tmp/storage');
+    
+    // Override bootstrap cache path
+    $app->instance('path.bootstrap.cache', '/tmp/bootstrap/cache');
     
     // Manually register core providers that may not auto-load in serverless
     $app->register(\Illuminate\View\ViewServiceProvider::class);
     $app->register(\Illuminate\Filesystem\FilesystemServiceProvider::class);
-    
-    // Enable debug mode temporarily to see the real error
-    putenv('APP_DEBUG=true');
-    $_ENV['APP_DEBUG'] = 'true';
 }
 
 return $app;
