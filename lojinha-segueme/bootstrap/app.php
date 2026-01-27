@@ -14,15 +14,16 @@ $app = Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Don't render views in production - output raw errors
-        if (getenv('APP_ENV') === 'production') {
-            $exceptions->shouldRenderJsonWhen(fn() => true);
-        }
+        //
     })->create();
 
 // Configure storage paths for Vercel (serverless/read-only filesystem)
 if (isset($_ENV['VERCEL']) || getenv('VERCEL') || getenv('APP_ENV') === 'production') {
     $app->useStoragePath('/tmp/storage');
+    
+    // Manually register core providers that may not auto-load in serverless
+    $app->register(\Illuminate\View\ViewServiceProvider::class);
+    $app->register(\Illuminate\Filesystem\FilesystemServiceProvider::class);
 }
 
 return $app;
