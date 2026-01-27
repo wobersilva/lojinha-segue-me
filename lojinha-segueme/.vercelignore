@@ -1,0 +1,5 @@
+storage/
+.env
+.env.*
+tests/
+phpunit.xml
