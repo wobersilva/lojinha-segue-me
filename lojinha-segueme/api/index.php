@@ -1,25 +1,8 @@
 <?php
-
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
-set_time_limit(30);
-
-$basePath = __DIR__ . '/..';
-
-// Create /tmp directories for Vercel BEFORE loading Laravel
-@mkdir('/tmp/storage/framework/cache/data', 0755, true);
-@mkdir('/tmp/storage/framework/sessions', 0755, true);
-@mkdir('/tmp/storage/framework/views', 0755, true);
-@mkdir('/tmp/storage/logs', 0755, true);
-@mkdir('/tmp/bootstrap/cache', 0755, true);
-
-// Set environment variables for cache paths
-putenv('APP_SERVICES_CACHE=/tmp/bootstrap/cache/services.php');
-putenv('APP_PACKAGES_CACHE=/tmp/bootstrap/cache/packages.php');
-
-require $basePath . '/vendor/autoload.php';
-
-define('LARAVEL_START', microtime(true));
+// Simple test - if you see this, PHP is working
+echo "PHP OK - ";
+echo date('Y-m-d H:i:s');
+exit;
 
 try {
     $app = require_once $basePath . '/bootstrap/app.php';
