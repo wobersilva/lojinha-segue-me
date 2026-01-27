@@ -6,30 +6,22 @@
             "use": "vercel-php@0.7.3"
         },
         {
-            "src": "build/**/*",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "images/**/*",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "favicon.ico",
-            "use": "@vercel/static"
+            "src": "api/assets.php",
+            "use": "vercel-php@0.7.3"
         }
     ],
     "routes": [
         {
-            "src": "/build/assets/(.*\\.(css|js))",
-            "dest": "/build/assets/$1"
+            "src": "/build/(.*)",
+            "dest": "/api/assets.php"
         },
         {
             "src": "/images/(.*)",
-            "dest": "/images/$1"
+            "dest": "/api/assets.php"
         },
         {
             "src": "/favicon.ico",
-            "dest": "/favicon.ico"
+            "dest": "/api/assets.php"
         },
         {
             "src": "/(.*)",
