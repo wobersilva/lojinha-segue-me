@@ -2,7 +2,7 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form method="POST" action="{{ route('login') }}">
+    <form method="POST" action="{{ route('login') }}" id="login-form">
         @csrf
 
         <!-- Email Address -->
@@ -59,4 +59,21 @@
             </div>
         @endif
     </form>
+
+    <!-- Script para salvar preferência de manter conectado -->
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function() {
+            const manterConectado = document.getElementById('remember_me').checked;
+            localStorage.setItem('manter_conectado', manterConectado ? 'true' : 'false');
+            
+            // Limpa flags de sessão anterior
+            localStorage.removeItem('lojinha_close_time');
+            sessionStorage.removeItem('lojinha_session_active');
+        });
+        
+        // Ao carregar a página de login, limpa as flags (usuário fez logout ou sessão expirou)
+        localStorage.removeItem('manter_conectado');
+        localStorage.removeItem('lojinha_close_time');
+        sessionStorage.removeItem('lojinha_session_active');
+    </script>
 </x-guest-layout>

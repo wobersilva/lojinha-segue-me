@@ -32,31 +32,56 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        <!-- Session Expiration Script -->
+        <!-- Session Expiration Script - Logout ao fechar navegador -->
         <script>
-            // Marca quando o usuário fecha a última aba/janela do site
-            window.addEventListener('beforeunload', function() {
-                // Salva timestamp quando a janela é fechada
-                sessionStorage.setItem('lastClosed', Date.now());
-            });
-
-            // Verifica ao carregar se deve fazer logout
-            window.addEventListener('load', function() {
-                const lastClosed = sessionStorage.getItem('lastClosed');
+            (function() {
+                const SESSION_KEY = 'lojinha_session_active';
+                const CLOSE_TIME_KEY = 'lojinha_close_time';
                 
-                // Se não houver registro, é a primeira vez
-                if (!lastClosed) {
-                    sessionStorage.setItem('isActive', 'true');
+                // Verifica se o usuário marcou "manter conectado"
+                const manterConectado = localStorage.getItem('manter_conectado') === 'true';
+                
+                // Se marcou manter conectado, não faz logout ao fechar
+                if (manterConectado) {
                     return;
                 }
                 
-                // Se passou mais de 3 segundos desde o fechamento, considera que fechou o navegador
-                const timeSinceClose = Date.now() - parseInt(lastClosed);
+                // Ao carregar a página, verifica se deve fazer logout
+                const closeTime = localStorage.getItem(CLOSE_TIME_KEY);
+                const wasActive = sessionStorage.getItem(SESSION_KEY);
                 
-                // Remove o item após verificar
-                sessionStorage.removeItem('lastClosed');
-                sessionStorage.setItem('isActive', 'true');
-            });
+                if (closeTime && !wasActive) {
+                    // O navegador foi fechado e reaberto - fazer logout
+                    localStorage.removeItem(CLOSE_TIME_KEY);
+                    
+                    // Redireciona para logout
+                    const logoutForm = document.createElement('form');
+                    logoutForm.method = 'POST';
+                    logoutForm.action = '{{ route("logout") }}';
+                    logoutForm.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
+                    document.body.appendChild(logoutForm);
+                    logoutForm.submit();
+                    return;
+                }
+                
+                // Marca que a sessão está ativa nesta aba
+                sessionStorage.setItem(SESSION_KEY, 'true');
+                localStorage.removeItem(CLOSE_TIME_KEY);
+                
+                // Ao fechar/sair da página, salva o timestamp
+                window.addEventListener('beforeunload', function() {
+                    // Só salva se não há outras abas abertas
+                    localStorage.setItem(CLOSE_TIME_KEY, Date.now().toString());
+                });
+                
+                // Remove o timestamp se a página carregar normalmente (refresh/navegação)
+                window.addEventListener('pageshow', function(event) {
+                    if (event.persisted) {
+                        // Página restaurada do cache - manter sessão
+                        sessionStorage.setItem(SESSION_KEY, 'true');
+                    }
+                });
+            })();
         </script>
     </head>
     <body class="font-sans antialiased">
