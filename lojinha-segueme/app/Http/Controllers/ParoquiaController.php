@@ -5,59 +5,69 @@ namespace App\Http\Controllers;
 use App\Models\Paroquia;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class ParoquiaController extends BaseController
 {
     /**
+     * Tempo de cache para o arquivo paroquias.txt (1 hora)
+     */
+    private const CACHE_TTL = 3600;
+
+    /**
      * Carrega paróquias e cidades do arquivo paroquias.txt
      * Retorna também um mapa: [nome => cidade]
+     * 
+     * OTIMIZAÇÃO: Cache de 1 hora para evitar leitura repetida do arquivo
      */
     private function carregarParoquiasDoArquivo(): array
     {
-        $paroquiasTxt = collect();
+        return Cache::remember('paroquias_txt_data', self::CACHE_TTL, function () {
+            $paroquiasTxt = collect();
 
-        if (Storage::exists('paroquias.txt')) {
-            $conteudo = Storage::get('paroquias.txt');
+            if (Storage::exists('paroquias.txt')) {
+                $conteudo = Storage::get('paroquias.txt');
 
-            // Normaliza quebras de linha (Windows \r\n, Unix \n, Mac \r)
-            $conteudo = str_replace(["\r\n", "\r"], "\n", $conteudo);
+                // Normaliza quebras de linha (Windows \r\n, Unix \n, Mac \r)
+                $conteudo = str_replace(["\r\n", "\r"], "\n", $conteudo);
 
-            $paroquiasTxt = collect(explode("\n", $conteudo))
-                ->map(fn($linha) => trim($linha))
-                ->filter()
-                ->map(function ($linha) {
-                    // Remove ponto e vírgula no final se existir
-                    $linha = rtrim($linha, ';');
+                $paroquiasTxt = collect(explode("\n", $conteudo))
+                    ->map(fn($linha) => trim($linha))
+                    ->filter()
+                    ->map(function ($linha) {
+                        // Remove ponto e vírgula no final se existir
+                        $linha = rtrim($linha, ';');
 
-                    // Aceita " | " ou "|" com espaços variáveis
-                    if (strpos($linha, ' | ') !== false) {
-                        $partes = explode(' | ', $linha, 2);
-                    } else {
-                        $partes = preg_split('/\s*\|\s*/', $linha, 2);
-                    }
+                        // Aceita " | " ou "|" com espaços variáveis
+                        if (strpos($linha, ' | ') !== false) {
+                            $partes = explode(' | ', $linha, 2);
+                        } else {
+                            $partes = preg_split('/\s*\|\s*/', $linha, 2);
+                        }
 
-                    $nome = trim($partes[0] ?? '');
-                    $cidade = trim($partes[1] ?? '');
+                        $nome = trim($partes[0] ?? '');
+                        $cidade = trim($partes[1] ?? '');
 
-                    return [
-                        'nome' => $nome,
-                        'cidade' => $cidade,
-                    ];
-                })
-                ->filter(fn($p) => !empty($p['nome']) && !empty($p['cidade']))
-                ->values();
-        }
+                        return [
+                            'nome' => $nome,
+                            'cidade' => $cidade,
+                        ];
+                    })
+                    ->filter(fn($p) => !empty($p['nome']) && !empty($p['cidade']))
+                    ->values();
+            }
 
-        // mapa: "PARÓQUIA X" => "CIDADE Y"
-        $mapaParoquiaCidade = $paroquiasTxt
-            ->mapWithKeys(fn($p) => [$p['nome'] => $p['cidade']])
-            ->toArray();
+            // mapa: "PARÓQUIA X" => "CIDADE Y"
+            $mapaParoquiaCidade = $paroquiasTxt
+                ->mapWithKeys(fn($p) => [$p['nome'] => $p['cidade']])
+                ->toArray();
 
-        return [
-            'paroquiasTxt' => $paroquiasTxt,
-            'mapaParoquiaCidade' => $mapaParoquiaCidade,
-        ];
+            return [
+                'paroquiasTxt' => $paroquiasTxt,
+                'mapaParoquiaCidade' => $mapaParoquiaCidade,
+            ];
+        });
     }
 
     /**
