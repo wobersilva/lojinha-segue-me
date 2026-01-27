@@ -20,6 +20,10 @@ $app = Application::configure(basePath: dirname(__DIR__))
 // Configure for Vercel serverless
 if (getenv('APP_ENV') === 'production') {
     $app->useStoragePath('/tmp/storage');
+    
+    // Enable debug to see errors
+    putenv('APP_DEBUG=true');
+    $_ENV['APP_DEBUG'] = 'true';
 }
 
 return $app;

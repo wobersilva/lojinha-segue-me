@@ -1,37 +1,32 @@
 <?php
-// Disable output buffering
-while (ob_get_level()) ob_end_flush();
-header('Content-Type: text/html; charset=utf-8');
-
-echo "1-PHP ";
 
 $basePath = __DIR__ . '/..';
 
-echo "2-DIRS ";
+// Create /tmp directories for Vercel
+@mkdir('/tmp/storage/framework/cache/data', 0755, true);
+@mkdir('/tmp/storage/framework/sessions', 0755, true);
 @mkdir('/tmp/storage/framework/views', 0755, true);
+@mkdir('/tmp/storage/logs', 0755, true);
 @mkdir('/tmp/bootstrap/cache', 0755, true);
 
-echo "3-ENV ";
+// Set environment variables for cache paths
 putenv('APP_SERVICES_CACHE=/tmp/bootstrap/cache/services.php');
 putenv('APP_PACKAGES_CACHE=/tmp/bootstrap/cache/packages.php');
 
-echo "4-AUTOLOAD ";
 require $basePath . '/vendor/autoload.php';
 
-echo "5-LOADED ";
 define('LARAVEL_START', microtime(true));
 
-echo "6-BOOTSTRAP ";
 $app = require_once $basePath . '/bootstrap/app.php';
 
-echo "7-APP ";
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
-echo "8-KERNEL ";
-$response = $kernel->handle($request = Illuminate\Http\Request::capture());
+$response = $kernel->handle(
+    $request = Illuminate\Http\Request::capture()
+);
 
-echo "9-DONE";
 $response->send();
+
 $kernel->terminate($request, $response);
 
 try {
