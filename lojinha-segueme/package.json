@@ -5,7 +5,7 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "vercel-build": "vite build"
+        "vercel-build": "composer install --no-dev --optimize-autoloader --no-interaction && vite build && mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",
