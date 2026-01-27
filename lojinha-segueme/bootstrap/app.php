@@ -24,6 +24,10 @@ if (isset($_ENV['VERCEL']) || getenv('VERCEL') || getenv('APP_ENV') === 'product
     // Manually register core providers that may not auto-load in serverless
     $app->register(\Illuminate\View\ViewServiceProvider::class);
     $app->register(\Illuminate\Filesystem\FilesystemServiceProvider::class);
+    
+    // Enable debug mode temporarily to see the real error
+    putenv('APP_DEBUG=true');
+    $_ENV['APP_DEBUG'] = 'true';
 }
 
 return $app;
