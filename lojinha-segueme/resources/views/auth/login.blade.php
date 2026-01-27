@@ -66,14 +66,14 @@
             const manterConectado = document.getElementById('remember_me').checked;
             localStorage.setItem('manter_conectado', manterConectado ? 'true' : 'false');
             
-            // Limpa flags de sessão anterior
-            localStorage.removeItem('lojinha_close_time');
-            sessionStorage.removeItem('lojinha_session_active');
+            // Limpa registros de abas anteriores para começar sessão limpa
+            localStorage.setItem('lojinha_open_tabs', '{}');
+            sessionStorage.removeItem('lojinha_tab_id');
         });
         
-        // Ao carregar a página de login, limpa as flags (usuário fez logout ou sessão expirou)
+        // Ao carregar a página de login, limpa tudo (usuário fez logout ou sessão expirou)
         localStorage.removeItem('manter_conectado');
-        localStorage.removeItem('lojinha_close_time');
-        sessionStorage.removeItem('lojinha_session_active');
+        localStorage.setItem('lojinha_open_tabs', '{}');
+        sessionStorage.removeItem('lojinha_tab_id');
     </script>
 </x-guest-layout>

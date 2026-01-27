@@ -32,55 +32,72 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        <!-- Session Expiration Script - Logout ao fechar navegador -->
+        <!-- Session Expiration Script - Logout ao fechar aba/navegador -->
         <script>
             (function() {
-                const SESSION_KEY = 'lojinha_session_active';
-                const CLOSE_TIME_KEY = 'lojinha_close_time';
+                const SESSION_KEY = 'lojinha_tab_id';
+                const TABS_KEY = 'lojinha_open_tabs';
                 
                 // Verifica se o usuário marcou "manter conectado"
                 const manterConectado = localStorage.getItem('manter_conectado') === 'true';
                 
                 // Se marcou manter conectado, não faz logout ao fechar
                 if (manterConectado) {
+                    sessionStorage.setItem(SESSION_KEY, 'active');
                     return;
                 }
                 
-                // Ao carregar a página, verifica se deve fazer logout
-                const closeTime = localStorage.getItem(CLOSE_TIME_KEY);
-                const wasActive = sessionStorage.getItem(SESSION_KEY);
+                // Gera ID único para esta aba
+                const tabId = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 
-                if (closeTime && !wasActive) {
-                    // O navegador foi fechado e reaberto - fazer logout
-                    localStorage.removeItem(CLOSE_TIME_KEY);
+                // Verifica se é uma nova sessão (navegador foi fechado e reaberto)
+                const existingTabId = sessionStorage.getItem(SESSION_KEY);
+                const openTabs = JSON.parse(localStorage.getItem(TABS_KEY) || '{}');
+                
+                // Se não tem ID de aba no sessionStorage E existem abas registradas no localStorage
+                // significa que o navegador/aba foi fechado e reaberto
+                if (!existingTabId && Object.keys(openTabs).length > 0) {
+                    // Limpa as abas antigas
+                    localStorage.setItem(TABS_KEY, '{}');
                     
-                    // Redireciona para logout
+                    // Faz logout
                     const logoutForm = document.createElement('form');
                     logoutForm.method = 'POST';
                     logoutForm.action = '{{ route("logout") }}';
+                    logoutForm.style.display = 'none';
                     logoutForm.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
                     document.body.appendChild(logoutForm);
                     logoutForm.submit();
                     return;
                 }
                 
-                // Marca que a sessão está ativa nesta aba
-                sessionStorage.setItem(SESSION_KEY, 'true');
-                localStorage.removeItem(CLOSE_TIME_KEY);
+                // Registra esta aba
+                sessionStorage.setItem(SESSION_KEY, tabId);
+                openTabs[tabId] = Date.now();
+                localStorage.setItem(TABS_KEY, JSON.stringify(openTabs));
                 
-                // Ao fechar/sair da página, salva o timestamp
+                // Ao fechar a aba, remove do registro
                 window.addEventListener('beforeunload', function() {
-                    // Só salva se não há outras abas abertas
-                    localStorage.setItem(CLOSE_TIME_KEY, Date.now().toString());
+                    const tabs = JSON.parse(localStorage.getItem(TABS_KEY) || '{}');
+                    delete tabs[tabId];
+                    localStorage.setItem(TABS_KEY, JSON.stringify(tabs));
                 });
                 
-                // Remove o timestamp se a página carregar normalmente (refresh/navegação)
-                window.addEventListener('pageshow', function(event) {
-                    if (event.persisted) {
-                        // Página restaurada do cache - manter sessão
-                        sessionStorage.setItem(SESSION_KEY, 'true');
+                // Heartbeat para manter registro atualizado (a cada 30s)
+                setInterval(function() {
+                    const tabs = JSON.parse(localStorage.getItem(TABS_KEY) || '{}');
+                    tabs[tabId] = Date.now();
+                    localStorage.setItem(TABS_KEY, JSON.stringify(tabs));
+                    
+                    // Remove abas inativas (mais de 60 segundos sem heartbeat)
+                    const now = Date.now();
+                    for (const id in tabs) {
+                        if (now - tabs[id] > 60000) {
+                            delete tabs[id];
+                        }
                     }
-                });
+                    localStorage.setItem(TABS_KEY, JSON.stringify(tabs));
+                }, 30000);
             })();
         </script>
     </head>
