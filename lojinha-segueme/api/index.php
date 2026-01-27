@@ -1,54 +1,38 @@
 <?php
-echo "Step 1: PHP OK<br>";
+// Disable output buffering
+while (ob_get_level()) ob_end_flush();
+header('Content-Type: text/html; charset=utf-8');
+
+echo "1-PHP ";
 
 $basePath = __DIR__ . '/..';
 
-echo "Step 2: Creating /tmp dirs<br>";
-@mkdir('/tmp/storage/framework/cache/data', 0755, true);
-@mkdir('/tmp/storage/framework/sessions', 0755, true);
+echo "2-DIRS ";
 @mkdir('/tmp/storage/framework/views', 0755, true);
-@mkdir('/tmp/storage/logs', 0755, true);
 @mkdir('/tmp/bootstrap/cache', 0755, true);
 
-echo "Step 3: Setting env vars<br>";
+echo "3-ENV ";
 putenv('APP_SERVICES_CACHE=/tmp/bootstrap/cache/services.php');
 putenv('APP_PACKAGES_CACHE=/tmp/bootstrap/cache/packages.php');
 
-echo "Step 4: Loading autoloader<br>";
-flush();
+echo "4-AUTOLOAD ";
 require $basePath . '/vendor/autoload.php';
 
-echo "Step 5: Autoloader loaded!<br>";
-flush();
-
+echo "5-LOADED ";
 define('LARAVEL_START', microtime(true));
 
-echo "Step 6: Loading bootstrap/app.php<br>";
-flush();
+echo "6-BOOTSTRAP ";
+$app = require_once $basePath . '/bootstrap/app.php';
 
-try {
-    $app = require_once $basePath . '/bootstrap/app.php';
-    echo "Step 7: App created!<br>";
-    flush();
-    
-    $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-    echo "Step 8: Kernel created!<br>";
-    flush();
-    
-    $response = $kernel->handle(
-        $request = Illuminate\Http\Request::capture()
-    );
-    echo "Step 9: Response ready!<br>";
-    flush();
-    
-    $response->send();
-    $kernel->terminate($request, $response);
-    
-} catch (\Throwable $e) {
-    echo "<h1>Error at some step</h1>";
-    echo "<p>" . $e->getMessage() . "</p>";
-    echo "<p>" . $e->getFile() . ":" . $e->getLine() . "</p>";
-}
+echo "7-APP ";
+$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+
+echo "8-KERNEL ";
+$response = $kernel->handle($request = Illuminate\Http\Request::capture());
+
+echo "9-DONE";
+$response->send();
+$kernel->terminate($request, $response);
 
 try {
     $app = require_once $basePath . '/bootstrap/app.php';
