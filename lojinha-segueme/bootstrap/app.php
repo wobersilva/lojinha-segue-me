@@ -3,7 +3,6 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Request;
 
 $app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,23 +14,14 @@ $app = Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // In production/serverless, render exceptions as JSON to avoid view errors
+        // Don't render views in production - output raw errors
         if (getenv('APP_ENV') === 'production') {
-            $exceptions->render(function (\Throwable $e, Request $request) {
-                return response()->json([
-                    'error' => true,
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => explode("\n", $e->getTraceAsString()),
-                ], 500);
-            });
+            $exceptions->shouldRenderJsonWhen(fn() => true);
         }
     })->create();
 
 // Configure storage paths for Vercel (serverless/read-only filesystem)
 if (isset($_ENV['VERCEL']) || getenv('VERCEL') || getenv('APP_ENV') === 'production') {
-    // Use /tmp for writable storage in serverless environment
     $app->useStoragePath('/tmp/storage');
 }
 
