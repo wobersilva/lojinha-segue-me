@@ -1,8 +1,54 @@
 <?php
-// Simple test - if you see this, PHP is working
-echo "PHP OK - ";
-echo date('Y-m-d H:i:s');
-exit;
+echo "Step 1: PHP OK<br>";
+
+$basePath = __DIR__ . '/..';
+
+echo "Step 2: Creating /tmp dirs<br>";
+@mkdir('/tmp/storage/framework/cache/data', 0755, true);
+@mkdir('/tmp/storage/framework/sessions', 0755, true);
+@mkdir('/tmp/storage/framework/views', 0755, true);
+@mkdir('/tmp/storage/logs', 0755, true);
+@mkdir('/tmp/bootstrap/cache', 0755, true);
+
+echo "Step 3: Setting env vars<br>";
+putenv('APP_SERVICES_CACHE=/tmp/bootstrap/cache/services.php');
+putenv('APP_PACKAGES_CACHE=/tmp/bootstrap/cache/packages.php');
+
+echo "Step 4: Loading autoloader<br>";
+flush();
+require $basePath . '/vendor/autoload.php';
+
+echo "Step 5: Autoloader loaded!<br>";
+flush();
+
+define('LARAVEL_START', microtime(true));
+
+echo "Step 6: Loading bootstrap/app.php<br>";
+flush();
+
+try {
+    $app = require_once $basePath . '/bootstrap/app.php';
+    echo "Step 7: App created!<br>";
+    flush();
+    
+    $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+    echo "Step 8: Kernel created!<br>";
+    flush();
+    
+    $response = $kernel->handle(
+        $request = Illuminate\Http\Request::capture()
+    );
+    echo "Step 9: Response ready!<br>";
+    flush();
+    
+    $response->send();
+    $kernel->terminate($request, $response);
+    
+} catch (\Throwable $e) {
+    echo "<h1>Error at some step</h1>";
+    echo "<p>" . $e->getMessage() . "</p>";
+    echo "<p>" . $e->getFile() . ":" . $e->getLine() . "</p>";
+}
 
 try {
     $app = require_once $basePath . '/bootstrap/app.php';
