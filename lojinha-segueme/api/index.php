@@ -2,48 +2,18 @@
 
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
+set_time_limit(30);
 
 $basePath = __DIR__ . '/..';
 
 // Create /tmp directories for Vercel BEFORE loading Laravel
-$tmpDirs = [
-    '/tmp/storage',
-    '/tmp/storage/app',
-    '/tmp/storage/framework',
-    '/tmp/storage/framework/cache',
-    '/tmp/storage/framework/cache/data',
-    '/tmp/storage/framework/sessions',
-    '/tmp/storage/framework/views',
-    '/tmp/storage/logs',
-    '/tmp/bootstrap',
-    '/tmp/bootstrap/cache',
-];
+@mkdir('/tmp/storage/framework/cache/data', 0755, true);
+@mkdir('/tmp/storage/framework/sessions', 0755, true);
+@mkdir('/tmp/storage/framework/views', 0755, true);
+@mkdir('/tmp/storage/logs', 0755, true);
+@mkdir('/tmp/bootstrap/cache', 0755, true);
 
-foreach ($tmpDirs as $dir) {
-    if (!is_dir($dir)) {
-        @mkdir($dir, 0755, true);
-    }
-}
-
-// Copy services.php and packages.php to /tmp/bootstrap/cache if they exist
-$cacheFiles = ['services.php', 'packages.php'];
-foreach ($cacheFiles as $file) {
-    $src = $basePath . '/bootstrap/cache/' . $file;
-    $dst = '/tmp/bootstrap/cache/' . $file;
-    if (file_exists($src) && !file_exists($dst)) {
-        @copy($src, $dst);
-    }
-}
-
-// Create empty cache files if they don't exist
-if (!file_exists('/tmp/bootstrap/cache/services.php')) {
-    file_put_contents('/tmp/bootstrap/cache/services.php', '<?php return [];');
-}
-if (!file_exists('/tmp/bootstrap/cache/packages.php')) {
-    file_put_contents('/tmp/bootstrap/cache/packages.php', '<?php return [];');
-}
-
-// Set environment variable for bootstrap cache path
+// Set environment variables for cache paths
 putenv('APP_SERVICES_CACHE=/tmp/bootstrap/cache/services.php');
 putenv('APP_PACKAGES_CACHE=/tmp/bootstrap/cache/packages.php');
 
