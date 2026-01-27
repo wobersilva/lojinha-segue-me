@@ -1,112 +1,82 @@
 <?php
 /**
  * Static asset server for Vercel
- * Serves CSS, JS, and other static files from the build directory
  */
 
 $basePath = __DIR__ . '/..';
 $requestUri = $_SERVER['REQUEST_URI'] ?? '';
-
-// Remove query string
 $path = parse_url($requestUri, PHP_URL_PATH);
 
-// Debug mode - add ?debug=1 to see info
+// Debug mode
 if (isset($_GET['debug'])) {
     header('Content-Type: text/plain');
-    echo "Request URI: " . $requestUri . "\n";
-    echo "Path: " . $path . "\n";
-    echo "Base Path: " . $basePath . "\n";
-    echo "Real Base Path: " . realpath($basePath) . "\n";
-    echo "\nChecking locations:\n";
-    
-    $locations = [
-        $basePath . $path,
-        $basePath . '/public' . $path,
-        $basePath . '/build' . str_replace('/build', '', $path),
-        $basePath . '/public/build' . str_replace('/build', '', $path),
-    ];
-    
-    foreach ($locations as $loc) {
-        echo "- $loc: " . (file_exists($loc) ? "EXISTS" : "NOT FOUND") . "\n";
-    }
-    
-    echo "\nDirectory listing of build/:\n";
-    $buildDir = $basePath . '/build';
-    if (is_dir($buildDir)) {
-        foreach (scandir($buildDir) as $file) {
-            echo "  - $file\n";
-        }
-    } else {
-        echo "  Directory not found\n";
-    }
-    
-    echo "\nDirectory listing of public/build/:\n";
-    $publicBuildDir = $basePath . '/public/build';
-    if (is_dir($publicBuildDir)) {
-        foreach (scandir($publicBuildDir) as $file) {
-            echo "  - $file\n";
-        }
-    } else {
-        echo "  Directory not found\n";
+    echo "Path: $path\n";
+    echo "Base: $basePath\n";
+    $testFile = $basePath . $path;
+    echo "File: $testFile\n";
+    echo "Exists: " . (file_exists($testFile) ? 'YES' : 'NO') . "\n";
+    if (file_exists($testFile)) {
+        echo "Size: " . filesize($testFile) . " bytes\n";
+        echo "First 500 chars:\n" . substr(file_get_contents($testFile), 0, 500);
     }
     exit;
 }
 
-// Security: only allow specific file types
-$allowedExtensions = ['css', 'js', 'map', 'ico', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'woff', 'woff2', 'ttf', 'eot'];
+// Allowed extensions
+$ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+$allowed = ['css', 'js', 'map', 'ico', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'woff', 'woff2', 'ttf', 'eot'];
 
-// Get file extension
-$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-
-if (!in_array($extension, $allowedExtensions)) {
+if (!in_array($ext, $allowed)) {
     http_response_code(403);
-    exit('Forbidden');
+    die('Forbidden');
 }
 
-// Determine the file path - try multiple locations
-$possiblePaths = [
-    $basePath . $path,                                    // /build/assets/...
-    $basePath . '/public' . $path,                        // /public/build/assets/...
+// Find file
+$filePath = null;
+$tryPaths = [
+    $basePath . $path,
+    $basePath . '/public' . $path,
 ];
 
-$filePath = null;
-foreach ($possiblePaths as $tryPath) {
-    if (file_exists($tryPath)) {
-        $filePath = $tryPath;
+foreach ($tryPaths as $try) {
+    if (file_exists($try)) {
+        $filePath = $try;
         break;
     }
 }
 
-// Check if file exists
 if (!$filePath) {
     http_response_code(404);
-    exit('File not found: ' . $path . ' (tried: ' . implode(', ', $possiblePaths) . ')');
+    die('Not found: ' . $path);
 }
 
-// Set content type
-$mimeTypes = [
-    'css' => 'text/css',
-    'js' => 'application/javascript',
-    'map' => 'application/json',
-    'ico' => 'image/x-icon',
-    'png' => 'image/png',
-    'jpg' => 'image/jpeg',
-    'jpeg' => 'image/jpeg',
-    'gif' => 'image/gif',
-    'svg' => 'image/svg+xml',
-    'woff' => 'font/woff',
+// MIME types
+$mimes = [
+    'css'   => 'text/css; charset=utf-8',
+    'js'    => 'application/javascript; charset=utf-8',
+    'map'   => 'application/json',
+    'ico'   => 'image/x-icon',
+    'png'   => 'image/png',
+    'jpg'   => 'image/jpeg',
+    'jpeg'  => 'image/jpeg',
+    'gif'   => 'image/gif',
+    'svg'   => 'image/svg+xml',
+    'woff'  => 'font/woff',
     'woff2' => 'font/woff2',
-    'ttf' => 'font/ttf',
-    'eot' => 'application/vnd.ms-fontobject',
+    'ttf'   => 'font/ttf',
+    'eot'   => 'application/vnd.ms-fontobject',
 ];
 
-$contentType = $mimeTypes[$extension] ?? 'application/octet-stream';
-header('Content-Type: ' . $contentType);
-
-// Cache headers for assets
-if (in_array($extension, ['css', 'js', 'woff', 'woff2', 'ttf', 'eot'])) {
-    header('Cache-Control: public, max-age=31536000, immutable');
+// Clear any output buffers
+while (ob_get_level()) {
+    ob_end_clean();
 }
 
-// Output file contents
+// Send headers
+header('Content-Type: ' . ($mimes[$ext] ?? 'application/octet-stream'));
+header('Content-Length: ' . filesize($filePath));
+header('Cache-Control: public, max-age=31536000, immutable');
+
+// Send file
 readfile($filePath);
+exit;
