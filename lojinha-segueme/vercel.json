@@ -6,11 +6,11 @@
             "use": "vercel-php@0.7.3"
         },
         {
-            "src": "build/**",
+            "src": "build/**/*",
             "use": "@vercel/static"
         },
         {
-            "src": "images/**",
+            "src": "images/**/*",
             "use": "@vercel/static"
         },
         {
@@ -20,7 +20,16 @@
     ],
     "routes": [
         {
-            "handle": "filesystem"
+            "src": "/build/assets/(.*\\.(css|js))",
+            "dest": "/build/assets/$1"
+        },
+        {
+            "src": "/images/(.*)",
+            "dest": "/images/$1"
+        },
+        {
+            "src": "/favicon.ico",
+            "dest": "/favicon.ico"
         },
         {
             "src": "/(.*)",
