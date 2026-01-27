@@ -1,5 +1,8 @@
 {
     "version": 2,
+    "framework": null,
+    "installCommand": "composer install --no-dev --optimize-autoloader --no-interaction && npm install",
+    "buildCommand": "npm run build",
     "builds": [
         {
             "src": "api/index.php",
