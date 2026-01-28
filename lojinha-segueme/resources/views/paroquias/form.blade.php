@@ -16,51 +16,81 @@
 @endif
 
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" style="padding: 1%;">
-    {{-- PARÓQUIA --}}
+    {{-- DEBUG: Remover após testar --}}
+    @if(app()->environment('local') || app()->environment('production'))
+        <div class="col-span-2 p-2 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
+            <strong>DEBUG:</strong> Total de paróquias carregadas do BANCO: {{ count($paroquiasBanco ?? []) }}
+        </div>
+    @endif
+    
+    {{-- NOME DA PARÓQUIA --}}
     <div style="padding: 1%;">
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Paróquia</label>
 
-        @php($nomeSelecionado = old('nome', $paroquia->nome ?? ''))
-
-        @php($selecionado = old('nome', ($paroquia->nome ?? '').'||'.($paroquia->cidade ?? '')))
-
-        <select id="paroquia_nome" name="nome" class="{{ $inputClass }}" required>
-            <option value="">Selecione uma paróquia...</option>
-
-            @foreach(($paroquiasTxt ?? collect()) as $p)
-                @php($valor = ($p['nome'] ?? '').'||'.($p['cidade'] ?? ''))
-
-                <option value="{{ $valor }}" @selected($selecionado === $valor)>
-                    {{ $p['nome'] ?? '' }} — {{ $p['cidade'] ?? '' }}
-                </option>
-            @endforeach
-        </select>
+        @if(isset($paroquia) && $paroquia->id)
+            {{-- Modo EDIÇÃO: campo editável --}}
+            <input
+                name="nome"
+                type="text"
+                class="{{ $inputClass }}"
+                value="{{ old('nome', $paroquia->nome ?? '') }}"
+                style="text-transform: uppercase"
+                oninput="this.value = this.value.toUpperCase()"
+                required
+            >
+        @else
+            {{-- Modo CRIAÇÃO: select com paróquias do BANCO --}}
+            <select id="paroquia_select" name="nome" class="{{ $inputClass }}" required>
+                <option value="">Selecione uma paróquia...</option>
+                
+                @foreach(($paroquiasBanco ?? collect()) as $p)
+                    <option 
+                        value="{{ $p->nome ?? $p['nome'] ?? '' }}"
+                        data-cidade="{{ $p->cidade ?? $p['cidade'] ?? '' }}"
+                        @selected(old('nome') === ($p->nome ?? $p['nome'] ?? ''))>
+                        {{ $p->nome ?? $p['nome'] ?? '' }} — {{ $p->cidade ?? $p['cidade'] ?? '' }}
+                    </option>
+                @endforeach
+            </select>
+        @endif
     </div>
 
-    {{-- CIDADE (AUTOMÁTICA / DESABILITADA) --}}
+    {{-- CIDADE --}}
     <div style="padding: 1%;">
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Cidade
-            <span class="text-xs text-gray-400">(preenchida automaticamente)</span>
+            @if(!isset($paroquia) || !$paroquia->id)
+                <span class="text-xs text-gray-400">(preenchida automaticamente)</span>
+            @endif
         </label>
 
-        @php($cidadeSelecionada = old('cidade', $paroquia->cidade ?? ''))
-
-        {{-- Campo visível, travado --}}
-        <input
-            id="cidade_display"
-            type="text"
-            class="{{ $inputClass }} opacity-80 cursor-not-allowed"
-            value="{{ $cidadeSelecionada }}"
-            disabled>
-
-        {{-- Campo real enviado no POST --}}
-        <input
-            type="hidden"
-            name="cidade"
-            id="cidade_hidden"
-            value="{{ $cidadeSelecionada }}"
-        >
+        @if(isset($paroquia) && $paroquia->id)
+            {{-- Modo EDIÇÃO: campo editável --}}
+            <input
+                name="cidade"
+                type="text"
+                class="{{ $inputClass }}"
+                value="{{ old('cidade', $paroquia->cidade ?? '') }}"
+                style="text-transform: uppercase"
+                oninput="this.value = this.value.toUpperCase()"
+                required
+            >
+        @else
+            {{-- Modo CRIAÇÃO: campo automático --}}
+            <input
+                id="cidade_display"
+                type="text"
+                class="{{ $inputClass }} opacity-80 cursor-not-allowed"
+                value="{{ old('cidade', '') }}"
+                disabled>
+            
+            <input
+                type="hidden"
+                name="cidade"
+                id="cidade_hidden"
+                value="{{ old('cidade', '') }}"
+            >
+        @endif
     </div>
 
     {{-- TELEFONE --}}
@@ -134,36 +164,29 @@
         if (telefoneInput && telefoneInput.value) {
             telefoneInput.value = formatarTelefone(telefoneInput.value);
         }
-    });
 
-</script>
+        // ====== AUTO-PREENCHER CIDADE (apenas no modo criação) ======
+        const selectParoquia = document.getElementById('paroquia_select');
+        const cidadeDisplay = document.getElementById('cidade_display');
+        const cidadeHidden = document.getElementById('cidade_hidden');
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const selectParoquia = document.getElementById('paroquia_nome');
-    const cidadeDisplay = document.getElementById('cidade_display');
-    const cidadeHidden = document.getElementById('cidade_hidden');
+        if (selectParoquia && cidadeDisplay && cidadeHidden) {
+            function atualizarCidade() {
+                const option = selectParoquia.options[selectParoquia.selectedIndex];
+                const cidade = option.dataset.cidade || '';
+                
+                cidadeDisplay.value = cidade;
+                cidadeHidden.value = cidade;
+            }
 
-    if (!selectParoquia || !cidadeDisplay || !cidadeHidden) return;
-
-    function atualizarCidade() {
-        const valor = (selectParoquia.value || '').trim();
-        if (!valor.includes('||')) {
-            cidadeDisplay.value = '';
-            cidadeHidden.value = '';
-            return;
+            selectParoquia.addEventListener('change', atualizarCidade);
+            
+            // Preenche ao carregar se já houver valor selecionado
+            if (selectParoquia.value) {
+                atualizarCidade();
+            }
         }
-
-        const partes = valor.split('||');
-        const cidade = (partes[1] || '').trim();
-
-        cidadeDisplay.value = cidade;
-        cidadeHidden.value = cidade;
-    }
-
-    selectParoquia.addEventListener('change', atualizarCidade);
-    atualizarCidade();
-});
+    });
 </script>
 
 

@@ -11,7 +11,7 @@
                 <div class="p-6">
                     <form method="POST" action="{{ route('paroquias.store') }}" class="space-y-6">
                         @csrf
-                        @include('paroquias.form', ['paroquiasTxt' => $paroquiasTxt ?? collect(), 'cidadesTxt' => $cidadesTxt ?? collect()])
+                        @include('paroquias.form', ['paroquiasBanco' => $paroquiasBanco ?? collect()])
 
                         <div class="flex justify-end gap-2">
                             <a href="{{ route('paroquias.index') }}"

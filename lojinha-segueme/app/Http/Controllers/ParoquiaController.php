@@ -120,11 +120,18 @@ class ParoquiaController extends BaseController
 
     public function create()
     {
-        $dados = $this->carregarParoquiasDoArquivo();
+        // Busca paróquias do BANCO DE DADOS (compatível com Vercel)
+        $paroquiasBanco = Paroquia::where('status', 'ativa')
+            ->orderBy('nome')
+            ->get(['id', 'nome', 'cidade']);
+        
+        // Log para debug (pode ser removido depois)
+        \Log::info('ParoquiaController@create - Total de paróquias carregadas do banco', [
+            'total' => $paroquiasBanco->count(),
+        ]);
 
         return view('paroquias.create', [
-            'paroquiasTxt' => $dados['paroquiasTxt'],
-            'mapaParoquiaCidade' => $dados['mapaParoquiaCidade'],
+            'paroquiasBanco' => $paroquiasBanco,
         ]);
     }
 
@@ -132,25 +139,11 @@ class ParoquiaController extends BaseController
     {
         $data = $request->validate([
             'nome' => ['required', 'string', 'max:255'],
-            // cidade vem do TXT; não confie no front
-            'cidade' => ['nullable', 'string', 'max:150'],
+            'cidade' => ['required', 'string', 'max:150'],
             'responsavel' => ['nullable', 'string', 'max:255'],
             'contato' => ['nullable', 'string', 'max:120'],
             'status' => ['required', 'in:ativa,inativa'],
         ]);
-
-        // Processa o nome antes de salvar
-        if (str_contains($data['nome'], '||')) {
-            [$nome, $cidade] = array_pad(explode('||', $data['nome'], 2), 2, null);
-            $data['nome'] = trim((string) $nome);
-            $data['cidade'] = trim((string) $cidade);
-        }
-
-        // Força cidade correta pelo TXT
-        $cidade = $this->cidadeDaParoquiaNoArquivo($data['nome']);
-        if ($cidade) {
-            $data['cidade'] = $cidade;
-        }
 
         Paroquia::create($data);
 
@@ -161,12 +154,14 @@ class ParoquiaController extends BaseController
 
     public function edit(Paroquia $paroquia)
     {
-        $dados = $this->carregarParoquiasDoArquivo();
+        // Busca paróquias do BANCO DE DADOS (compatível com Vercel)
+        $paroquiasBanco = Paroquia::where('status', 'ativa')
+            ->orderBy('nome')
+            ->get(['id', 'nome', 'cidade']);
 
         return view('paroquias.edit', [
             'paroquia' => $paroquia,
-            'paroquiasTxt' => $dados['paroquiasTxt'],
-            'mapaParoquiaCidade' => $dados['mapaParoquiaCidade'],
+            'paroquiasBanco' => $paroquiasBanco,
         ]);
     }
 
@@ -174,24 +169,11 @@ class ParoquiaController extends BaseController
     {
         $data = $request->validate([
             'nome' => ['required', 'string', 'max:255'],
-            'cidade' => ['nullable', 'string', 'max:150'],
+            'cidade' => ['required', 'string', 'max:150'],
             'responsavel' => ['nullable', 'string', 'max:255'],
             'contato' => ['nullable', 'string', 'max:120'],
             'status' => ['required', 'in:ativa,inativa'],
         ]);
-
-        // Processa o nome antes de salvar
-        if (str_contains($data['nome'], '||')) {
-            [$nome, $cidade] = array_pad(explode('||', $data['nome'], 2), 2, null);
-            $data['nome'] = trim((string) $nome);
-            $data['cidade'] = trim((string) $cidade);
-        }
-
-        // Força cidade correta pelo TXT
-        $cidade = $this->cidadeDaParoquiaNoArquivo($data['nome']);
-        if ($cidade) {
-            $data['cidade'] = $cidade;
-        }
 
         $paroquia->update($data);
 
