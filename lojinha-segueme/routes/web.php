@@ -30,9 +30,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('estoque.saida.form');
     Route::post('/estoque/saida', [EstoqueController::class, 'saidaProvisoria'])
         ->name('estoque.saida');
-    Route::get('/relatorios/inventario', [RelatorioController::class, 'inventario']);
-    Route::get('/relatorios/vendas-paroquia', [RelatorioController::class, 'vendasPorParoquia']);
-    Route::get('/relatorios/vendas-periodo', [RelatorioController::class, 'vendasPorPeriodo']);
+    Route::get('/relatorios/inventario', [RelatorioController::class, 'inventario'])
+        ->name('relatorios.inventario');
+    Route::get('/relatorios/vendas-paroquia', [RelatorioController::class, 'vendasPorParoquia'])
+        ->name('relatorios.vendas-paroquia');
+    Route::get('/relatorios/vendas-periodo', [RelatorioController::class, 'vendasPorPeriodo'])
+        ->name('relatorios.vendas-periodo');
 });
 
 Route::get('/toast-test', function () {
@@ -117,9 +120,12 @@ Route::prefix('estoque')->group(function () {
         ->name('estoque.baixa');
 });
 
-Route::get('/relatorios/inventario', [RelatorioController::class, 'inventario']);
-Route::get('/relatorios/vendas-paroquia', [RelatorioController::class, 'vendasPorParoquia']);
-Route::get('/relatorios/vendas-periodo', [RelatorioController::class, 'vendasPorPeriodo']);
+Route::get('/relatorios/inventario', [RelatorioController::class, 'inventario'])
+    ->name('relatorios.inventario');
+Route::get('/relatorios/vendas-paroquia', [RelatorioController::class, 'vendasPorParoquia'])
+    ->name('relatorios.vendas-paroquia');
+Route::get('/relatorios/vendas-periodo', [RelatorioController::class, 'vendasPorPeriodo'])
+    ->name('relatorios.vendas-periodo');
 
 require __DIR__ . '/auth.php';
 // =====================================================

@@ -26,6 +26,12 @@ class RelatorioController extends BaseController
     // -------------------------------
     public function vendasPorParoquia(Request $request)
     {
+        // Se não tiver paroquia_id, mostra a tela de seleção
+        if (!$request->has('paroquia_id')) {
+            $paroquias = Paroquia::orderBy('nome')->get();
+            return view('relatorios.vendas_paroquia_select', compact('paroquias'));
+        }
+
         $paroquiaId = $request->paroquia_id;
 
         $dados = BaixaEstoque::select(

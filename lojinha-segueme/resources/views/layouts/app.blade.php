@@ -102,6 +102,80 @@
         </script>
     </head>
     <body class="font-sans antialiased">
+    
+    {{-- Tela de Carregamento Global --}}
+    <div id="global-loader" class="fixed inset-0 z-[99999] bg-white dark:bg-gray-900 flex items-center justify-center transition-opacity duration-300">
+        <div class="text-center">
+            {{-- Logo ou Ícone --}}
+            <div class="mb-6 animate-bounce">
+                <div class="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                </div>
+            </div>
+            
+            {{-- Spinner Moderno --}}
+            <div class="relative w-24 h-24 mx-auto mb-6">
+                {{-- Círculo externo --}}
+                <div class="absolute inset-0 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
+                
+                {{-- Círculo animado --}}
+                <div class="absolute inset-0 border-4 border-transparent border-t-indigo-600 border-r-purple-600 rounded-full animate-spin"></div>
+                
+                {{-- Círculo interno pulsante --}}
+                <div class="absolute inset-3 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full animate-pulse"></div>
+            </div>
+            
+            {{-- Texto --}}
+            <div class="space-y-2">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                    Carregando...
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 animate-pulse">
+                    Aguarde um momento
+                </p>
+            </div>
+            
+            {{-- Barra de progresso decorativa --}}
+            <div class="mt-6 w-48 h-1 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 animate-loading-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Animação personalizada para a barra de progresso */
+        @keyframes loading-bar {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        
+        .animate-loading-bar {
+            animation: loading-bar 1.5s ease-in-out infinite;
+        }
+        
+        /* Esconde o conteúdo inicialmente */
+        body.loading #main-content {
+            opacity: 0;
+        }
+        
+        /* Previne scroll quando está carregando */
+        body.loading {
+            overflow: hidden;
+        }
+        
+        /* Transição suave do loader */
+        #global-loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+    
     <div
         x-data="{
             sidebarOpen: false,
@@ -121,6 +195,7 @@
                 }
             }
         }"
+        id="main-content"
         class="min-h-screen bg-gray-100 dark:bg-gray-900"
     >
         <div class="flex min-h-screen">
@@ -347,6 +422,121 @@
         });
     })();
     </script>
+    
+    {{-- Script de Controle do Loader Global --}}
+    <script>
+    (function() {
+        const loader = document.getElementById('global-loader');
+        const body = document.body;
+        
+        // Marca o body como loading inicialmente
+        body.classList.add('loading');
+        
+        // Função para esconder o loader
+        function hideLoader() {
+            if (loader) {
+                loader.classList.add('hidden');
+                body.classList.remove('loading');
+                
+                // Remove completamente após a transição
+                setTimeout(() => {
+                    if (loader.parentNode) {
+                        loader.remove();
+                    }
+                }, 300);
+            }
+        }
+        
+        // Esconde o loader quando a página estiver completamente carregada
+        if (document.readyState === 'complete') {
+            hideLoader();
+        } else {
+            window.addEventListener('load', hideLoader);
+        }
+        
+        // Backup: esconde após 3 segundos se algo der errado
+        setTimeout(hideLoader, 3000);
+        
+        // Mostra o loader em navegações (opcional - comentado por padrão)
+        // Para ativar, descomente as linhas abaixo
+        /*
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a[href]');
+            if (link && link.href && 
+                !link.target && 
+                !link.download && 
+                link.href.startsWith(window.location.origin) &&
+                !link.href.includes('#')) {
+                
+                // Recria o loader se foi removido
+                if (!document.getElementById('global-loader')) {
+                    const newLoader = loader.cloneNode(true);
+                    newLoader.classList.remove('hidden');
+                    document.body.appendChild(newLoader);
+                    body.classList.add('loading');
+                }
+            }
+        });
+        */
+        
+        // Mostra loader durante submissão de formulários
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            
+            // Ignora formulários de logout e pesquisa instantânea
+            if (form.action.includes('logout') || form.classList.contains('no-loader')) {
+                return;
+            }
+            
+            // Recria o loader se necessário
+            let currentLoader = document.getElementById('global-loader');
+            if (!currentLoader) {
+                const loaderHTML = `
+                    <div id="global-loader" class="fixed inset-0 z-[99999] bg-white dark:bg-gray-900 flex items-center justify-center transition-opacity duration-300">
+                        <div class="text-center">
+                            <div class="mb-6 animate-bounce">
+                                <div class="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                    <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="relative w-24 h-24 mx-auto mb-6">
+                                <div class="absolute inset-0 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
+                                <div class="absolute inset-0 border-4 border-transparent border-t-indigo-600 border-r-purple-600 rounded-full animate-spin"></div>
+                                <div class="absolute inset-3 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full animate-pulse"></div>
+                            </div>
+                            <div class="space-y-2">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Processando...</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 animate-pulse">Aguarde um momento</p>
+                            </div>
+                            <div class="mt-6 w-48 h-1 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 animate-loading-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('afterbegin', loaderHTML);
+                body.classList.add('loading');
+            } else {
+                currentLoader.classList.remove('hidden');
+                body.classList.add('loading');
+            }
+        });
+        
+        // Expõe funções globalmente para uso em outros scripts
+        window.showLoader = function() {
+            let currentLoader = document.getElementById('global-loader');
+            if (currentLoader) {
+                currentLoader.classList.remove('hidden');
+                body.classList.add('loading');
+            }
+        };
+        
+        window.hideLoader = hideLoader;
+    })();
+    </script>
+
     
 </body>
 
