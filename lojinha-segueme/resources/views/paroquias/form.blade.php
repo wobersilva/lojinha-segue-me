@@ -16,13 +16,6 @@
 @endif
 
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" style="padding: 1%;">
-    {{-- DEBUG: Remover após testar --}}
-    @if(app()->environment('local') || app()->environment('production'))
-        <div class="col-span-2 p-2 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
-            <strong>DEBUG:</strong> Total de paróquias carregadas do BANCO: {{ count($paroquiasBanco ?? []) }}
-        </div>
-    @endif
-    
     {{-- NOME DA PARÓQUIA --}}
     <div style="padding: 1%;">
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Paróquia</label>
