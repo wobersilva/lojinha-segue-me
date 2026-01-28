@@ -18,7 +18,7 @@ class ParoquiaController extends BaseController
     /**
      * Carrega paróquias e cidades do arquivo paroquias.txt
      * Retorna também um mapa: [nome => cidade]
-     * 
+     *
      * OTIMIZAÇÃO: Cache de 1 hora para evitar leitura repetida do arquivo
      */
     private function carregarParoquiasDoArquivo(): array
@@ -26,36 +26,46 @@ class ParoquiaController extends BaseController
         return Cache::remember('paroquias_txt_data', self::CACHE_TTL, function () {
             $paroquiasTxt = collect();
 
-            if (Storage::exists('paroquias.txt')) {
-                $conteudo = Storage::get('paroquias.txt');
+            // Tenta ler do disco 'public' (storage/app/public/paroquias.txt)
+            $disk = Storage::disk('public');
 
-                // Normaliza quebras de linha (Windows \r\n, Unix \n, Mac \r)
-                $conteudo = str_replace(["\r\n", "\r"], "\n", $conteudo);
+            if ($disk->exists('paroquias.txt')) {
+                $conteudo = $disk->get('paroquias.txt');
 
-                $paroquiasTxt = collect(explode("\n", $conteudo))
-                    ->map(fn($linha) => trim($linha))
-                    ->filter()
-                    ->map(function ($linha) {
-                        // Remove ponto e vírgula no final se existir
-                        $linha = rtrim($linha, ';');
+                // Verifica se o arquivo não está vazio
+                if (!empty(trim($conteudo))) {
+                    // Normaliza quebras de linha (Windows \r\n, Unix \n, Mac \r)
+                    $conteudo = str_replace(["\r\n", "\r"], "\n", $conteudo);
 
-                        // Aceita " | " ou "|" com espaços variáveis
-                        if (strpos($linha, ' | ') !== false) {
-                            $partes = explode(' | ', $linha, 2);
-                        } else {
-                            $partes = preg_split('/\s*\|\s*/', $linha, 2);
-                        }
+                    $paroquiasTxt = collect(explode("\n", $conteudo))
+                        ->map(fn($linha) => trim($linha))
+                        ->filter()
+                        ->map(function ($linha) {
+                            // Remove ponto e vírgula no final se existir
+                            $linha = rtrim($linha, ';');
 
-                        $nome = trim($partes[0] ?? '');
-                        $cidade = trim($partes[1] ?? '');
+                            // Aceita " | " ou "|" com espaços variáveis
+                            if (strpos($linha, ' | ') !== false) {
+                                $partes = explode(' | ', $linha, 2);
+                            } else {
+                                $partes = preg_split('/\s*\|\s*/', $linha, 2);
+                            }
 
-                        return [
-                            'nome' => $nome,
-                            'cidade' => $cidade,
-                        ];
-                    })
-                    ->filter(fn($p) => !empty($p['nome']) && !empty($p['cidade']))
-                    ->values();
+                            $nome = trim($partes[0] ?? '');
+                            $cidade = trim($partes[1] ?? '');
+
+                            return [
+                                'nome' => $nome,
+                                'cidade' => $cidade,
+                            ];
+                        })
+                        ->filter(fn($p) => !empty($p['nome']) && !empty($p['cidade']))
+                        ->values();
+                } else {
+                    \Log::warning('Arquivo paroquias.txt está vazio');
+                }
+            } else {
+                \Log::warning('Arquivo paroquias.txt não encontrado em: ' . $disk->path('paroquias.txt'));
             }
 
             // mapa: "PARÓQUIA X" => "CIDADE Y"
