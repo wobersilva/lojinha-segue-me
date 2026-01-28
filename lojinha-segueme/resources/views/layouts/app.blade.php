@@ -34,17 +34,7 @@
         
         <!-- Estilos do Loader (inline para carregar primeiro) -->
         <style>
-            /* Animação personalizada para a barra de progresso */
-            @keyframes loading-bar {
-                0% { transform: translateX(-100%); }
-                100% { transform: translateX(100%); }
-            }
-            
-            .animate-loading-bar {
-                animation: loading-bar 1.5s ease-in-out infinite;
-            }
-            
-            /* Loader sempre visível inicialmente */
+            /* Loader principal */
             #global-loader {
                 position: fixed;
                 inset: 0;
@@ -52,11 +42,12 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                transition: opacity 0.3s ease-out;
+                transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                 opacity: 1;
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
             }
             
-            /* Quando esconder */
             #global-loader.fade-out {
                 opacity: 0;
                 pointer-events: none;
@@ -69,6 +60,51 @@
             
             body.page-loading #main-content {
                 visibility: hidden;
+            }
+            
+            /* Animações modernas */
+            @keyframes float {
+                0%, 100% { transform: translateY(0px); }
+                50% { transform: translateY(-10px); }
+            }
+            
+            @keyframes pulse-ring {
+                0% {
+                    transform: scale(0.8);
+                    opacity: 1;
+                }
+                100% {
+                    transform: scale(1.4);
+                    opacity: 0;
+                }
+            }
+            
+            @keyframes rotate-smooth {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            
+            @keyframes dots {
+                0%, 20% { content: '.'; }
+                40% { content: '..'; }
+                60%, 100% { content: '...'; }
+            }
+            
+            .animate-float {
+                animation: float 3s ease-in-out infinite;
+            }
+            
+            .animate-pulse-ring {
+                animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            
+            .animate-rotate-smooth {
+                animation: rotate-smooth 2s linear infinite;
+            }
+            
+            .loading-dots::after {
+                content: '.';
+                animation: dots 1.5s steps(1) infinite;
             }
         </style>
         
@@ -152,48 +188,86 @@
     </head>
     <body class="font-sans antialiased page-loading">
     
-    {{-- Tela de Carregamento Global --}}
+    {{-- Tela de Carregamento Global - Design Moderno --}}
     <div id="global-loader">
-        <div class="bg-white dark:bg-gray-900 w-full h-full flex items-center justify-center">
-            <div class="text-center">
-                {{-- Logo ou Ícone --}}
-                <div class="mb-6 animate-bounce">
-                    <div class="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                        </svg>
+        <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 w-full h-full flex items-center justify-center relative overflow-hidden">
+            
+            {{-- Efeito de fundo animado --}}
+            <div class="absolute inset-0 opacity-30">
+                <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl animate-pulse-ring"></div>
+                <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse-ring" style="animation-delay: 1s;"></div>
+            </div>
+            
+            <div class="text-center relative z-10">
+                {{-- Logo Minimalista com Efeito Float --}}
+                <div class="mb-8 animate-float">
+                    <div class="relative inline-block">
+                        {{-- Anel pulsante externo --}}
+                        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl opacity-20 blur-xl scale-110"></div>
+                        
+                        {{-- Container do ícone --}}
+                        <div class="relative w-20 h-20 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl">
+                            <svg class="w-11 h-11 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                            </svg>
+                        </div>
                     </div>
                 </div>
                 
-                {{-- Spinner Moderno --}}
-                <div class="relative w-24 h-24 mx-auto mb-6">
-                    {{-- Círculo externo --}}
-                    <div class="absolute inset-0 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
-                    
-                    {{-- Círculo animado --}}
-                    <div class="absolute inset-0 border-4 border-transparent border-t-indigo-600 border-r-purple-600 rounded-full animate-spin"></div>
-                    
-                    {{-- Círculo interno pulsante --}}
-                    <div class="absolute inset-3 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full animate-pulse"></div>
+                {{-- Spinner Minimalista --}}
+                <div class="mb-8 flex justify-center">
+                    <div class="relative w-16 h-16">
+                        {{-- Círculo base --}}
+                        <div class="absolute inset-0 border-4 border-gray-200 dark:border-gray-700 rounded-full opacity-25"></div>
+                        
+                        {{-- Círculo animado gradiente --}}
+                        <div class="absolute inset-0 border-4 border-transparent border-t-indigo-500 border-r-purple-500 rounded-full animate-rotate-smooth"></div>
+                        
+                        {{-- Ponto central --}}
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full animate-pulse"></div>
+                        </div>
+                    </div>
                 </div>
                 
-                {{-- Texto --}}
-                <div class="space-y-2">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                        Carregando...
+                {{-- Texto Elegante --}}
+                <div class="space-y-3">
+                    <h3 class="text-xl font-light text-gray-800 dark:text-gray-100 tracking-wide">
+                        <span class="loading-text">Carregando</span><span class="loading-dots"></span>
                     </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 animate-pulse">
+                    <p class="text-sm font-light text-gray-500 dark:text-gray-400">
                         Aguarde um momento
                     </p>
                 </div>
                 
-                {{-- Barra de progresso decorativa --}}
-                <div class="mt-6 w-48 h-1 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 animate-loading-bar"></div>
+                {{-- Barra de Progresso Minimalista --}}
+                <div class="mt-8 w-64 mx-auto">
+                    <div class="h-0.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" 
+                             style="animation: progress 2s ease-in-out infinite;">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    
+    <style>
+        @keyframes progress {
+            0% {
+                width: 0%;
+                opacity: 0.8;
+            }
+            50% {
+                width: 70%;
+                opacity: 1;
+            }
+            100% {
+                width: 100%;
+                opacity: 0.8;
+            }
+        }
+    </style>
     
     <div
         x-data="{
