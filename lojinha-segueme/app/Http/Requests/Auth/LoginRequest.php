@@ -49,6 +49,16 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // Verifica se o usuário está aprovado
+        $user = Auth::user();
+        if (!$user->isApproved()) {
+            Auth::logout();
+            
+            throw ValidationException::withMessages([
+                'email' => 'Sua conta ainda não foi aprovada por um administrador. Aguarde a aprovação para acessar o sistema.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

@@ -21,6 +21,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'is_approved',
+        'is_admin',
     ];
 
     /**
@@ -43,6 +45,41 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_approved' => 'boolean',
+            'is_admin' => 'boolean',
+            'approved_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Usuário que aprovou este usuário
+     */
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Usuários que este usuário aprovou
+     */
+    public function approvedUsers()
+    {
+        return $this->hasMany(User::class, 'approved_by');
+    }
+
+    /**
+     * Verifica se o usuário está aprovado
+     */
+    public function isApproved(): bool
+    {
+        return $this->is_approved === true;
+    }
+
+    /**
+     * Verifica se o usuário é administrador
+     */
+    public function isAdmin(): bool
+    {
+        return $this->is_admin === true;
     }
 }

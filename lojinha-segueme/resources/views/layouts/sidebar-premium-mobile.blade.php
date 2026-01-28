@@ -77,4 +77,25 @@
             <span>📅</span><span>Vendas por Período</span>
         </a>
     </div>
+
+    {{-- Administração (apenas para admins) --}}
+    @if(auth()->user()->isAdmin())
+    <div class="pt-4">
+        <div class="px-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            Administração
+        </div>
+        <a href="{{ url('/admin/users') }}" class="mt-2 flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <span>👥</span>
+            <span>Gerenciar Usuários</span>
+            @php
+                $pendingCount = \App\Models\User::where('is_approved', false)->count();
+            @endphp
+            @if($pendingCount > 0)
+                <span class="ml-auto px-2 py-0.5 bg-amber-600 dark:bg-amber-500 text-white rounded-full text-xs font-bold shadow-sm">
+                    {{ $pendingCount }}
+                </span>
+            @endif
+        </a>
+    </div>
+    @endif
 </nav>

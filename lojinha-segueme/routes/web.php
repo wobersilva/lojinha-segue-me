@@ -4,6 +4,7 @@
 // Arquivo: routes/web.php
 // =====================================================
 
+use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EncontroController;
 use App\Http\Controllers\EstoqueController;
@@ -126,6 +127,17 @@ Route::get('/relatorios/vendas-paroquia', [RelatorioController::class, 'vendasPo
     ->name('relatorios.vendas-paroquia');
 Route::get('/relatorios/vendas-periodo', [RelatorioController::class, 'vendasPorPeriodo'])
     ->name('relatorios.vendas-periodo');
+
+// -------------------------------
+// ADMIN - GERENCIAMENTO DE USUÁRIOS
+// -------------------------------
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
+    Route::post('/users/{user}/approve', [UserManagementController::class, 'approve'])->name('users.approve');
+    Route::delete('/users/{user}/reject', [UserManagementController::class, 'reject'])->name('users.reject');
+    Route::post('/users/{user}/toggle-admin', [UserManagementController::class, 'toggleAdmin'])->name('users.toggle-admin');
+    Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
+});
 
 require __DIR__ . '/auth.php';
 // =====================================================

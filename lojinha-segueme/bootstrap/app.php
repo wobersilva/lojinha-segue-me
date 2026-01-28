@@ -11,7 +11,16 @@ $app = Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Registra os middlewares de alias
+        $middleware->alias([
+            'approved' => \App\Http\Middleware\EnsureUserIsApproved::class,
+            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+        ]);
+
+        // Aplica o middleware de aprovação em todas as rotas autenticadas
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\EnsureUserIsApproved::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
