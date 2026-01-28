@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Force HTTPS in production (Vercel runs behind a proxy)
         if (config('app.env') === 'production') {
-            URL::forceScheme('https');
+            // URL::forceScheme('https');
         }
     }
 }
