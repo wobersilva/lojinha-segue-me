@@ -151,6 +151,22 @@
             font-weight: bold;
         }
 
+        .totals {
+            margin-top: 20px;
+            text-align: right;
+            font-size: 13px;
+            color: #334155;
+        }
+
+        .totals p {
+            margin-bottom: 5px;
+        }
+
+        .totals strong {
+            font-size: 15px;
+            color: #1e40af;
+        }
+
         @media print {
             .print-button, .back-button {
                 display: none !important;
@@ -184,33 +200,56 @@
     <div class="header">
         <h1>Lojinha do Segue-me</h1>
         <h2>Produtos Vendidos por Período</h2>
+        <p style="font-size: 12px; color: #64748b; margin-top: 5px;">
+            Período: {{ \Carbon\Carbon::parse($dataInicio)->format('d/m/Y') }} até {{ \Carbon\Carbon::parse($dataFim)->format('d/m/Y') }}
+        </p>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Produto</th>
-                <th class="text-center" style="width: 120px;">Quantidade</th>
-                <th class="text-right" style="width: 150px;">Total Arrecadado</th>
-            </tr>
-        </thead>
-        <tbody>
-            @php($soma = 0)
-            @foreach($dados as $item)
-                @php($soma += $item->total)
+    @if($dados->isEmpty())
+        <div style="padding: 40px; text-align: center; background: #f8fafc; border-radius: 8px; margin-top: 20px;">
+            <p style="font-size: 16px; color: #64748b; margin-bottom: 10px;">📅</p>
+            <p style="font-size: 14px; color: #64748b;">
+                Nenhuma venda encontrada no período selecionado.
+            </p>
+        </div>
+    @else
+        <table>
+            <thead>
                 <tr>
-                    <td>{{ $item->descricao }}</td>
-                    <td class="text-center">{{ $item->quantidade }}</td>
-                    <td class="text-right">R$ {{ number_format($item->total, 2, ',', '.') }}</td>
+                    <th style="width: 40px;" class="text-center">#</th>
+                    <th>Produto</th>
+                    <th class="text-center" style="width: 120px;">Quantidade</th>
+                    <th class="text-right" style="width: 150px;">Total Arrecadado</th>
                 </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="2" class="text-right">TOTAL GERAL:</td>
-                <td class="text-right">R$ {{ number_format($soma, 2, ',', '.') }}</td>
-            </tr>
-        </tfoot>
-    </table>
+            </thead>
+            <tbody>
+                @php($soma = 0)
+                @php($totalQuantidade = 0)
+                @foreach($dados as $index => $item)
+                    @php($soma += $item->total)
+                    @php($totalQuantidade += $item->quantidade)
+                    <tr>
+                        <td class="text-center">{{ $index + 1 }}</td>
+                        <td>{{ $item->descricao }}</td>
+                        <td class="text-center">{{ $item->quantidade }}</td>
+                        <td class="text-right">R$ {{ number_format($item->total, 2, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" class="text-right">TOTAL GERAL:</td>
+                    <td class="text-center">{{ $totalQuantidade }}</td>
+                    <td class="text-right">R$ {{ number_format($soma, 2, ',', '.') }}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="totals">
+            <p>Total de Produtos Diferentes: <strong>{{ $dados->count() }}</strong></p>
+            <p>Quantidade Total Vendida: <strong>{{ $totalQuantidade }}</strong> unidade(s)</p>
+            <p>Valor Total Arrecadado: <strong>R$ {{ number_format($soma, 2, ',', '.') }}</strong></p>
+        </div>
+    @endif
 </body>
 </html>

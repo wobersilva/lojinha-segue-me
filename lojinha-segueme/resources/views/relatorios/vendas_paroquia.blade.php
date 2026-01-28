@@ -208,6 +208,22 @@
         <h1>Lojinha do Segue-me</h1>
         <h2>Relatório de Vendas por Paróquia</h2>
         <h3>Paróquia: {{ $paroquia->nome }}@if($paroquia->cidade) - {{ $paroquia->cidade }}@endif</h3>
+        @if($dataInicio || $dataFim)
+            <p style="font-size: 12px; color: #64748b; margin-top: 5px;">
+                Período:
+                @if($dataInicio)
+                    {{ \Carbon\Carbon::parse($dataInicio)->format('d/m/Y') }}
+                @else
+                    (início)
+                @endif
+                até
+                @if($dataFim)
+                    {{ \Carbon\Carbon::parse($dataFim)->format('d/m/Y') }}
+                @else
+                    (fim)
+                @endif
+            </p>
+        @endif
     </div>
 
     @if($dados->isEmpty())
@@ -223,9 +239,10 @@
                 <tr>
                     <th style="width: 40px;" class="text-center">#</th>
                     <th>Encontro</th>
+                    <th style="width: 100px;" class="text-center">Data</th>
                     <th>Produto</th>
-                    <th class="text-center" style="width: 120px;">Quantidade</th>
-                    <th class="text-right" style="width: 150px;">Total</th>
+                    <th class="text-center" style="width: 100px;">Quantidade</th>
+                    <th class="text-right" style="width: 130px;">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -237,6 +254,7 @@
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
                         <td>{{ $item->encontro }}</td>
+                        <td class="text-center">{{ \Carbon\Carbon::parse($item->data_encontro)->format('d/m/Y') }}</td>
                         <td>{{ $item->descricao }}</td>
                         <td class="text-center">{{ $item->quantidade }}</td>
                         <td class="text-right">R$ {{ number_format($item->total, 2, ',', '.') }}</td>
@@ -245,7 +263,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3" class="text-right">TOTAL DE PRODUTOS:</td>
+                    <td colspan="4" class="text-right">TOTAL DE PRODUTOS:</td>
                     <td class="text-center">{{ $totalQuantidade }}</td>
                     <td class="text-right">R$ {{ number_format($soma, 2, ',', '.') }}</td>
                 </tr>

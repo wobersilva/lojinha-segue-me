@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-6">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-2xl overflow-hidden">
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-center gap-3">
@@ -15,10 +15,10 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                Selecione a Paróquia
+                                Selecione os Filtros
                             </h3>
                             <p class="text-sm text-gray-600 dark:text-gray-400">
-                                Escolha a paróquia para visualizar o relatório de vendas
+                                Escolha a paróquia e período para visualizar o relatório de vendas
                             </p>
                         </div>
                     </div>
@@ -45,6 +45,34 @@
                                         </option>
                                     @endforeach
                                 </select>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="data_inicio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Data Inicial
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="data_inicio"
+                                        id="data_inicio"
+                                        class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900
+                                            focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    >
+                                </div>
+
+                                <div>
+                                    <label for="data_fim" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Data Final
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="data_fim"
+                                        id="data_fim"
+                                        class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900
+                                            focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    >
+                                </div>
                             </div>
 
                             @if($paroquias->isEmpty())
@@ -107,6 +135,9 @@
                             <p>
                                 Este relatório mostra todas as vendas realizadas em encontros da paróquia selecionada,
                                 detalhando produtos vendidos, quantidades e valores totais por encontro.
+                            </p>
+                            <p class="mt-2">
+                                <strong>Dica:</strong> Os filtros de data são opcionais. Deixe em branco para ver todas as vendas.
                             </p>
                         </div>
                     </div>
