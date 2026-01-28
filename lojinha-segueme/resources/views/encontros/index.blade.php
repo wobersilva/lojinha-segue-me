@@ -59,7 +59,7 @@
                                 <option value="">Todas</option>
                                 @foreach($paroquias as $paroquia)
                                     <option value="{{ $paroquia->id }}" {{ request('paroquia_id') == $paroquia->id ? 'selected' : '' }}>
-                                        {{ $paroquia->nome }}
+                                        {{ $paroquia->nome }} — {{ $paroquia->cidade }}
                                     </option>
                                 @endforeach
                             </select>
@@ -117,6 +117,10 @@
                                         </td>
                                         <td class="py-3 pr-4 text-gray-600 dark:text-gray-300">
                                             {{ $encontro->paroquia->nome ?? '-' }}
+                                            @if($encontro->paroquia && $encontro->paroquia->cidade)
+                                                <br>
+                                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ $encontro->paroquia->cidade }}</span>
+                                            @endif
                                         </td>
                                         <td class="py-3 pr-4 text-gray-600 dark:text-gray-300">
                                             {{ $encontro->data_inicio->format('d/m/Y') }}

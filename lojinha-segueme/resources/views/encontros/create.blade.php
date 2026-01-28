@@ -34,9 +34,11 @@
                         <select x-model="encontro.paroquia_id" required
                             class="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900
                                 focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                            <option value="">Selecione uma paróquia</option>
+                            <option value="">Selecione uma paróquia...</option>
                             @foreach($paroquias as $paroquia)
-                                <option value="{{ $paroquia->id }}">{{ $paroquia->nome }}</option>
+                                <option value="{{ $paroquia->id }}">
+                                    {{ $paroquia->nome }} — {{ $paroquia->cidade }}
+                                </option>
                             @endforeach
                         </select>
                     </div>

@@ -41,10 +41,7 @@
                                     <option value="">Selecione uma paróquia...</option>
                                     @foreach($paroquias as $paroquia)
                                         <option value="{{ $paroquia->id }}">
-                                            {{ $paroquia->nome }}
-                                            @if($paroquia->cidade)
-                                                - {{ $paroquia->cidade }}
-                                            @endif
+                                            {{ $paroquia->nome }} — {{ $paroquia->cidade }}
                                         </option>
                                     @endforeach
                                 </select>
