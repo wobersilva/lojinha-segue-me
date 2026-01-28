@@ -31,6 +31,55 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        <!-- Estilos do Loader (inline para carregar primeiro) -->
+        <style>
+            /* Animação personalizada para a barra de progresso */
+            @keyframes loading-bar {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
+            }
+            
+            .animate-loading-bar {
+                animation: loading-bar 1.5s ease-in-out infinite;
+            }
+            
+            /* Loader sempre visível inicialmente */
+            #global-loader {
+                position: fixed;
+                inset: 0;
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: opacity 0.3s ease-out;
+                opacity: 1;
+            }
+            
+            /* Quando esconder */
+            #global-loader.fade-out {
+                opacity: 0;
+                pointer-events: none;
+            }
+            
+            /* Previne scroll e flash enquanto carrega */
+            body.page-loading {
+                overflow: hidden;
+            }
+            
+            body.page-loading #main-content {
+                visibility: hidden;
+            }
+        </style>
+        
+        <!-- Script do Loader (executa antes do body) -->
+        <script>
+            // Adiciona classe ao body para prevenir flash
+            document.documentElement.classList.add('page-loading');
+            if (document.body) {
+                document.body.classList.add('page-loading');
+            }
+        </script>
 
         <!-- Session Expiration Script - Logout ao fechar aba/navegador -->
         <script>
@@ -101,80 +150,50 @@
             })();
         </script>
     </head>
-    <body class="font-sans antialiased">
+    <body class="font-sans antialiased page-loading">
     
     {{-- Tela de Carregamento Global --}}
-    <div id="global-loader" class="fixed inset-0 z-[99999] bg-white dark:bg-gray-900 flex items-center justify-center transition-opacity duration-300">
-        <div class="text-center">
-            {{-- Logo ou Ícone --}}
-            <div class="mb-6 animate-bounce">
-                <div class="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                    </svg>
+    <div id="global-loader">
+        <div class="bg-white dark:bg-gray-900 w-full h-full flex items-center justify-center">
+            <div class="text-center">
+                {{-- Logo ou Ícone --}}
+                <div class="mb-6 animate-bounce">
+                    <div class="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                        <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                    </div>
                 </div>
-            </div>
-            
-            {{-- Spinner Moderno --}}
-            <div class="relative w-24 h-24 mx-auto mb-6">
-                {{-- Círculo externo --}}
-                <div class="absolute inset-0 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
                 
-                {{-- Círculo animado --}}
-                <div class="absolute inset-0 border-4 border-transparent border-t-indigo-600 border-r-purple-600 rounded-full animate-spin"></div>
+                {{-- Spinner Moderno --}}
+                <div class="relative w-24 h-24 mx-auto mb-6">
+                    {{-- Círculo externo --}}
+                    <div class="absolute inset-0 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
+                    
+                    {{-- Círculo animado --}}
+                    <div class="absolute inset-0 border-4 border-transparent border-t-indigo-600 border-r-purple-600 rounded-full animate-spin"></div>
+                    
+                    {{-- Círculo interno pulsante --}}
+                    <div class="absolute inset-3 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full animate-pulse"></div>
+                </div>
                 
-                {{-- Círculo interno pulsante --}}
-                <div class="absolute inset-3 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full animate-pulse"></div>
-            </div>
-            
-            {{-- Texto --}}
-            <div class="space-y-2">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                    Carregando...
-                </h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 animate-pulse">
-                    Aguarde um momento
-                </p>
-            </div>
-            
-            {{-- Barra de progresso decorativa --}}
-            <div class="mt-6 w-48 h-1 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 animate-loading-bar"></div>
+                {{-- Texto --}}
+                <div class="space-y-2">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                        Carregando...
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 animate-pulse">
+                        Aguarde um momento
+                    </p>
+                </div>
+                
+                {{-- Barra de progresso decorativa --}}
+                <div class="mt-6 w-48 h-1 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 animate-loading-bar"></div>
+                </div>
             </div>
         </div>
     </div>
-
-    <style>
-        /* Animação personalizada para a barra de progresso */
-        @keyframes loading-bar {
-            0% {
-                transform: translateX(-100%);
-            }
-            100% {
-                transform: translateX(100%);
-            }
-        }
-        
-        .animate-loading-bar {
-            animation: loading-bar 1.5s ease-in-out infinite;
-        }
-        
-        /* Esconde o conteúdo inicialmente */
-        body.loading #main-content {
-            opacity: 0;
-        }
-        
-        /* Previne scroll quando está carregando */
-        body.loading {
-            overflow: hidden;
-        }
-        
-        /* Transição suave do loader */
-        #global-loader.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-    </style>
     
     <div
         x-data="{
@@ -428,114 +447,118 @@
     (function() {
         const loader = document.getElementById('global-loader');
         const body = document.body;
-        
-        // Marca o body como loading inicialmente
-        body.classList.add('loading');
+        const html = document.documentElement;
         
         // Função para esconder o loader
         function hideLoader() {
             if (loader) {
-                loader.classList.add('hidden');
-                body.classList.remove('loading');
+                loader.classList.add('fade-out');
+                body.classList.remove('page-loading');
+                html.classList.remove('page-loading');
                 
-                // Remove completamente após a transição
+                // Remove o elemento após a animação
                 setTimeout(() => {
-                    if (loader.parentNode) {
+                    if (loader && loader.parentNode) {
                         loader.remove();
                     }
-                }, 300);
+                }, 400);
             }
         }
         
-        // Esconde o loader quando a página estiver completamente carregada
-        if (document.readyState === 'complete') {
-            hideLoader();
-        } else {
-            window.addEventListener('load', hideLoader);
-        }
-        
-        // Backup: esconde após 3 segundos se algo der errado
-        setTimeout(hideLoader, 3000);
-        
-        // Mostra o loader em navegações (opcional - comentado por padrão)
-        // Para ativar, descomente as linhas abaixo
-        /*
-        document.addEventListener('click', function(e) {
-            const link = e.target.closest('a[href]');
-            if (link && link.href && 
-                !link.target && 
-                !link.download && 
-                link.href.startsWith(window.location.origin) &&
-                !link.href.includes('#')) {
-                
-                // Recria o loader se foi removido
-                if (!document.getElementById('global-loader')) {
-                    const newLoader = loader.cloneNode(true);
-                    newLoader.classList.remove('hidden');
-                    document.body.appendChild(newLoader);
-                    body.classList.add('loading');
-                }
-            }
-        });
-        */
-        
-        // Mostra loader durante submissão de formulários
-        document.addEventListener('submit', function(e) {
-            const form = e.target;
-            
-            // Ignora formulários de logout e pesquisa instantânea
-            if (form.action.includes('logout') || form.classList.contains('no-loader')) {
-                return;
-            }
-            
-            // Recria o loader se necessário
+        // Função para mostrar o loader
+        function showLoader(text = 'Carregando...') {
             let currentLoader = document.getElementById('global-loader');
+            
             if (!currentLoader) {
+                // Cria um novo loader
                 const loaderHTML = `
-                    <div id="global-loader" class="fixed inset-0 z-[99999] bg-white dark:bg-gray-900 flex items-center justify-center transition-opacity duration-300">
-                        <div class="text-center">
-                            <div class="mb-6 animate-bounce">
-                                <div class="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                                    <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                                    </svg>
+                    <div id="global-loader">
+                        <div class="bg-white dark:bg-gray-900 w-full h-full flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="mb-6 animate-bounce">
+                                    <div class="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                        <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                                        </svg>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="relative w-24 h-24 mx-auto mb-6">
-                                <div class="absolute inset-0 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
-                                <div class="absolute inset-0 border-4 border-transparent border-t-indigo-600 border-r-purple-600 rounded-full animate-spin"></div>
-                                <div class="absolute inset-3 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full animate-pulse"></div>
-                            </div>
-                            <div class="space-y-2">
-                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Processando...</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 animate-pulse">Aguarde um momento</p>
-                            </div>
-                            <div class="mt-6 w-48 h-1 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 animate-loading-bar"></div>
+                                <div class="relative w-24 h-24 mx-auto mb-6">
+                                    <div class="absolute inset-0 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
+                                    <div class="absolute inset-0 border-4 border-transparent border-t-indigo-600 border-r-purple-600 rounded-full animate-spin"></div>
+                                    <div class="absolute inset-3 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full animate-pulse"></div>
+                                </div>
+                                <div class="space-y-2">
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">${text}</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 animate-pulse">Aguarde um momento</p>
+                                </div>
+                                <div class="mt-6 w-48 h-1 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 animate-loading-bar"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 `;
+                
                 document.body.insertAdjacentHTML('afterbegin', loaderHTML);
-                body.classList.add('loading');
+                body.classList.add('page-loading');
+                html.classList.add('page-loading');
             } else {
-                currentLoader.classList.remove('hidden');
-                body.classList.add('loading');
+                currentLoader.classList.remove('fade-out');
+                body.classList.add('page-loading');
+                html.classList.add('page-loading');
             }
+        }
+        
+        // Esconde quando a página estiver completamente carregada
+        if (document.readyState === 'complete') {
+            setTimeout(hideLoader, 100);
+        } else {
+            window.addEventListener('load', function() {
+                setTimeout(hideLoader, 100);
+            });
+        }
+        
+        // Backup de segurança: esconde após 5 segundos
+        setTimeout(hideLoader, 5000);
+        
+        // Mostra loader ao submeter formulários
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            
+            // Ignora formulários específicos
+            if (form.action.includes('logout') || 
+                form.classList.contains('no-loader') ||
+                form.method.toUpperCase() === 'GET') {
+                return;
+            }
+            
+            showLoader('Processando...');
         });
         
-        // Expõe funções globalmente para uso em outros scripts
-        window.showLoader = function() {
-            let currentLoader = document.getElementById('global-loader');
-            if (currentLoader) {
-                currentLoader.classList.remove('hidden');
-                body.classList.add('loading');
+        // Mostra loader em cliques de links internos
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a[href]');
+            
+            if (link && 
+                link.href && 
+                !link.target && 
+                !link.download && 
+                !link.classList.contains('no-loader') &&
+                link.href.startsWith(window.location.origin) &&
+                !link.href.includes('#') &&
+                !link.href.includes('javascript:')) {
+                
+                showLoader('Carregando...');
             }
-        };
+        }, true);
         
+        // Expõe funções globalmente
+        window.showLoader = showLoader;
         window.hideLoader = hideLoader;
+        
     })();
     </script>
+
 
     
 </body>
